@@ -1,0 +1,5 @@
+body.dark-mode {background: #121212; color: #eaeaea;}
+body.dark-mode header {background: rgba(30,30,30,0.9);}
+body.dark-mode footer {background: #111;}
+body.dark-mode .card {background: #1e1e1e; color: #fff;}
+body.dark-mode .section.alt {background: #1a1a1a;}
