@@ -119,7 +119,6 @@
 
           {{-- PDF / Imprimir / Volver --}}
           <a href="{{ route('facturas.pdf', $factura) }}" class="fx-btn fx-btn-sky">Descargar PDF</a>
-          <button onclick="window.print()" class="fx-btn fx-btn-ghost">Imprimir</button>
           <a href="{{ route('facturas.index') }}" class="fx-btn fx-btn-dark">Volver</a>
         </div>
       </div>

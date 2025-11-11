@@ -30,14 +30,6 @@
         {{-- KPIs --}}
         <div class="kpis">
             <div class="kpi">
-                <div class="n">{{ $citasProgramadas }}</div>
-                <div class="l">Citas Programadas</div>
-            </div>
-            <div class="kpi">
-                <div class="n">{{ $clientesAtendidos }}</div>
-                <div class="l">Clientes Atendidos</div>
-            </div>
-            <div class="kpi">
                 <div class="n">{{ $mascotasAtendidas }}</div>
                 <div class="l">Mascotas Atendidas</div>
             </div>
@@ -64,10 +56,7 @@
                 <i class="fas fa-paw"></i>
                 <a href="{{ $safe('mascotas.index') }}">Historial de Mascotas</a>
              </div>
-             <div class="opt">
-                <i class="fas fa-user-circle"></i>
-                <a href="{{ $safe('clientes.index') }}">Mis Clientes</a>
-             </div>
+            
              <div class="opt">
   <i class="fas fa-file-prescription"></i>
   <a href="{{ route('vet.recetas.mine') }}">Recetas</a>

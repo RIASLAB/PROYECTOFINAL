@@ -1,99 +1,112 @@
 @php
   $fmt = fn($v) => '$ '.number_format((float)$v, 0, ',', '.');
   $estado = strtolower($factura->estado ?? 'pendiente');
-  $chipBg = ['pendiente'=>'#FDE68A','pagada'=>'#BBF7D0','anulada'=>'#FECACA'][$estado] ?? '#E5E7EB';
-  $chipColor = ['pendiente'=>'#B45309','pagada'=>'#065F46','anulada'=>'#991B1B'][$estado] ?? '#374151';
+  $colores = [
+    'pendiente' => ['#FEF3C7', '#92400E', '#FDE68A'],
+    'pagada'    => ['#D1FAE5', '#065F46', '#86EFAC'],
+    'anulada'   => ['#FEE2E2', '#991B1B', '#FECACA'],
+  ];
+  [$bg, $color, $border] = $colores[$estado] ?? ['#E5E7EB', '#374151', '#D1D5DB'];
 @endphp
+
 <!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Factura #{{ $factura->id }}</title>
+<title>Factura #{{ str_pad($factura->id, 6, '0', STR_PAD_LEFT) }}</title>
 <style>
-  @page { margin: 24px 28px; }
-  *{ box-sizing:border-box; }
-  body{ font-family: DejaVu Sans, Arial, sans-serif; color:#0f172a; font-size:12px; }
-  .header{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px }
-  .h-left{ display:flex; gap:10px; align-items:center }
-  .ico{ width:34px; height:34px; border-radius:8px; background:#e0f2fe; color:#0369a1; display:flex; align-items:center; justify-content:center; font-size:16px }
-  h1{ margin:0; font-size:18px }
-  .muted{ color:#64748b; font-weight:600; font-size:11px }
-  .chip{ display:inline-block; padding:3px 8px; border-radius:999px; font-weight:800; font-size:10px }
-  .kv{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 14px }
-  .k{ color:#475569; font-weight:700; font-size:11px }
-  .v{ font-weight:800 }
-  .card{ border:1px solid #e5e7eb; border-radius:10px; padding:10px }
-  table{ width:100%; border-collapse:collapse }
-  th{ text-align:left; font-size:11px; color:#475569; border-bottom:1px solid #e5e7eb; padding:8px 6px }
-  td{ padding:8px 6px; border-bottom:1px solid #eef2f7 }
-  .r{ text-align:right }
-  .sum{ width:44%; margin-left:auto; margin-top:12px }
-  .row{ display:flex; justify-content:space-between; margin:5px 0 }
-  .row.total{ border-top:1px solid #e5e7eb; padding-top:8px; font-size:14px; font-weight:800 }
+  body { font-family: DejaVu Sans, sans-serif; color:#1e293b; font-size:11px; margin:20px; }
+  .header { background:#0284c7; color:white; padding:15px 20px; border-radius:10px; }
+  .header h1 { margin:0; font-size:20px; }
+  .banner { margin-top:10px; display:flex; justify-content:space-between; }
+  .status { background:{{ $bg }}; color:{{ $color }}; border:2px solid {{ $border }};
+            border-radius:15px; padding:3px 10px; font-weight:700; font-size:10px; }
+  .section { margin-top:20px; }
+  .table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td { border:1px solid #e5e7eb; padding:8px; font-size:10.5px; }
+  th { background:#1e293b; color:white; text-transform:uppercase; font-size:9px; }
+  tr:nth-child(even) { background:#f9fafb; }
+  .summary { margin-top:15px; width:50%; float:right; }
+  .summary td { padding:6px 8px; }
+  .total { background:#bfdbfe; border:2px solid #3b82f6; font-weight:900; }
+  .footer { text-align:center; font-size:9px; color:#64748b; margin-top:40px; border-top:1px solid #e5e7eb; padding-top:10px; }
 </style>
 </head>
 <body>
+
+  {{-- ENCABEZADO --}}
   <div class="header">
-    <div class="h-left">
-      <div class="ico">🧾</div>
+    <h1>VetApp Clínica</h1>
+    <small>Sistema de Gestión Veterinaria</small>
+    <div class="banner">
       <div>
-        <h1>Factura #{{ $factura->id }}</h1>
-        <div class="muted">
-          Historia #{{ $factura->historia_id ?? 'N/D' }} ·
-          Estado: <span class="chip" style="background:{{ $chipBg }}; color:{{ $chipColor }}">{{ ucfirst($factura->estado ?? 'pendiente') }}</span>
-        </div>
+        <strong>Factura #{{ str_pad($factura->id,6,'0',STR_PAD_LEFT) }}</strong><br>
+        Historia: {{ $factura->historia_id ?? 'N/D' }}
+      </div>
+      <div>
+        <div class="status">{{ ucfirst($estado) }}</div>
+        <small>{{ $factura->created_at?->format('d/m/Y H:i') }}</small>
       </div>
     </div>
-    <div style="text-align:right">
-      <div style="font-weight:800">Fecha</div>
-      <div>{{ $factura->created_at?->format('d/m/Y H:i') }}</div>
-      @if($factura->estado === 'pagada' && $factura->paid_at)
-        <div style="margin-top:6px">
-          <div style="font-weight:800">Pagada el</div>
-          <div>{{ \Carbon\Carbon::parse($factura->paid_at)->format('d/m/Y H:i') }}</div>
-        </div>
-      @endif
-    </div>
   </div>
 
-  <div class="kv">
-    <div><div class="k">Cliente</div><div class="v">{{ $factura->cliente ?: 'N/D' }}</div></div>
-    <div><div class="k">Mascota</div><div class="v">{{ $factura->mascota ?: 'N/D' }}</div></div>
-    <div><div class="k">Atendido por</div><div class="v">
-      @php $userName = optional(\App\Models\User::find($factura->user_id))->name; @endphp
-      {{ $userName ?: 'N/D' }}
-    </div></div>
-    <div><div class="k">Impuesto aplicado</div><div class="v">{{ rtrim(rtrim(number_format($factura->impuesto ?? 0,2,',','.'), '0'), ',') }}%</div></div>
+  {{-- CLIENTE --}}
+  <div class="section">
+    <h3>Cliente</h3>
+    <table class="table">
+      <tr><td><b>Cliente:</b></td><td>{{ $factura->cliente ?? 'No especificado' }}</td></tr>
+      <tr><td><b>Mascota:</b></td><td>{{ $factura->mascota ?? 'No especificada' }}</td></tr>
+      <tr><td><b>Atendido por:</b></td><td>{{ optional(\App\Models\User::find($factura->user_id))->name ?? 'No especificado' }}</td></tr>
+      <tr><td><b>Impuesto:</b></td><td>{{ rtrim(rtrim(number_format($factura->impuesto ?? 0,2,',','.'),'0'),',') }}%</td></tr>
+    </table>
   </div>
 
-  <div class="card">
-    <table>
+  {{-- ITEMS --}}
+  <div class="section">
+    <h3>Servicios y Productos</h3>
+    <table class="table">
       <thead>
-        <tr>
-          <th>Descripción</th>
-          <th class="r" style="width:80px">Cant.</th>
-          <th class="r" style="width:120px">Precio</th>
-          <th class="r" style="width:120px">Subtotal</th>
-        </tr>
+        <tr><th>Descripción</th><th>Cant.</th><th>Precio Unit.</th><th>Subtotal</th></tr>
       </thead>
       <tbody>
-        @foreach($factura->items as $it)
+        @forelse($factura->items as $it)
           <tr>
             <td>{{ $it->descripcion }}</td>
-            <td class="r">{{ $it->cantidad }}</td>
-            <td class="r">{{ $fmt($it->precio ?? 0) }}</td>
-            <td class="r" style="font-weight:800">{{ $fmt($it->subtotal ?? 0) }}</td>
+            <td style="text-align:center">{{ $it->cantidad }}</td>
+            <td style="text-align:right">{{ $fmt($it->precio) }}</td>
+            <td style="text-align:right">{{ $fmt($it->subtotal) }}</td>
           </tr>
-        @endforeach
+        @empty
+          <tr><td colspan="4" style="text-align:center; color:#9ca3af">No hay items registrados</td></tr>
+        @endforelse
       </tbody>
     </table>
-
-    @php $impVal = round(($factura->subtotal ?? 0) * (($factura->impuesto ?? 0)/100)); @endphp
-    <div class="sum">
-      <div class="row"><div>Subtotal</div><div>{{ $fmt($factura->subtotal ?? 0) }}</div></div>
-      <div class="row"><div>Impuesto ({{ rtrim(rtrim(number_format($factura->impuesto ?? 0,2,',','.'), '0'), ',') }}%)</div><div>{{ $fmt($impVal) }}</div></div>
-      <div class="row total"><div>Total</div><div>{{ $fmt($factura->total ?? 0) }}</div></div>
-    </div>
   </div>
+
+  {{-- RESUMEN --}}
+  @php $impVal = round(($factura->subtotal ?? 0) * (($factura->impuesto ?? 0)/100)); @endphp
+  <table class="summary">
+    <tr><td>Subtotal</td><td style="text-align:right">{{ $fmt($factura->subtotal ?? 0) }}</td></tr>
+    <tr><td>Impuesto ({{ $factura->impuesto ?? 0 }}%)</td><td style="text-align:right">{{ $fmt($impVal) }}</td></tr>
+    <tr class="total"><td>Total a pagar</td><td style="text-align:right">{{ $fmt($factura->total ?? 0) }}</td></tr>
+  </table>
+
+  {{-- ESTADO --}}
+  @if($factura->estado === 'pagada' && $factura->paid_at)
+    <div style="margin-top:10px; text-align:center; color:#065f46;">
+      ✅ Pagada el {{ \Carbon\Carbon::parse($factura->paid_at)->format('d/m/Y H:i') }}
+    </div>
+  @elseif($factura->estado === 'anulada')
+    <div style="margin-top:10px; text-align:center; color:#991b1b;">
+      ⚠️ Factura anulada — sin validez
+    </div>
+  @endif
+
+  {{-- FOOTER --}}
+  <div class="footer">
+    VetApp - {{ now()->format('d/m/Y H:i:s') }}<br>
+    soporte@vetapp.com · www.vetapp.com
+  </div>
+
 </body>
 </html>

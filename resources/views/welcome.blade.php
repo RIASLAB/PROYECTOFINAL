@@ -83,6 +83,7 @@
   </section>
 
   <!-- Quiénes somos -->
+<!-- Quiénes somos -->
   <section id="quienes" class="section">
     <h2>Quiénes Somos</h2>
     <p>
@@ -90,6 +91,33 @@
       con un equipo comprometido en ofrecer un servicio humano, profesional y de calidad para cada mascota.
     </p>
   </section>
+
+  <section id="equipo" class="section alt">
+  <h2>Conoce a Nuestro Equipo</h2>
+  <div class="cards">
+    <!-- Card 1 -->
+    <div class="card">
+      <img src="{{ asset('images/dueño1.png') }}" alt="Luis Fernando Majin">
+      <h3>Luis Fernando Majin</h3>
+      <p>Estudiante de la UNIAJC</p>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="card">
+      <img src="{{ asset('images/dueño2.jpeg') }}" alt="Jhon Edinson Riascos">
+      <h3>Jhon Edinson Riascos</h3>
+      <p>Estudiante de la UNIAJC</p>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="card">
+      <img src="{{ asset('images/dueño3.jpeg') }}" alt="Ruben Darley Mina">
+      <h3>Ruben Darley Mina</h3>
+      <p>Estudiante de la UNIAJC</p>
+    </div>
+  </div>
+</section>
+
 
   <!-- Acerca -->
   <section id="acerca" class="section alt">
@@ -127,18 +155,7 @@
     </div>
   </section>
 
-  <!-- Nuestro Equipo -->
-  <section id="equipo" class="section alt">
-    <h2>Conoce a Nuestro Equipo</h2>
-    <div class="cards">
-      <div class="card">
-        <img src="{{ asset('images/dueños.png') }}" alt="programadores">
-        <h3>Jhon Edinson Riascos y Luis Fernando Majin</h3>
-        <p>Estudiantes de la UNIAJC.</p>
-      </div>
-    </div>
-  </section>
-
+ 
   <!-- Mapa -->
   <section id="mapa" class="section">
     <h2>¿Cómo llegar?</h2>

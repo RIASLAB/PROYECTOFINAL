@@ -1,127 +1,205 @@
 <x-app-layout>
-    {{-- BANDA SUPERIOR (mismo estilo que Citas) --}}
-    <div role="banner" class="!bg-blue-700 !text-white shadow-lg relative z-20">
-        <div class="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 !text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M4.5 12a7.5 7.5 0 1015 0 7.5 7.5 0 10-15 0zm9-3l-3 6-2-2" />
-                </svg>
-                <div>
-                    <h1 class="text-2xl font-semibold leading-tight !text-white">Lista de Mascotas</h1>
-                    <p class="text-sm !text-white/90">Administra tus mascotas y sus dueños</p>
-                </div>
-            </div>
-            <a href="{{ route('mascotas.create') }}"
-               class="inline-flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 px-4 py-2 text-sm border border-white/40 transition-colors !text-white">
-                + Nueva Mascota
-            </a>
+  <style>
+    :root{
+      --mx-ink:#0f172a; --mx-text:#334155; --mx-muted:#64748b;
+      --mx-line:#e5e7eb; --mx-card:#ffffff; --mx-bg:#f6f9fc;
+      --shadow:0 8px 28px rgba(15,23,42,.08);
+      --shadow-sm:0 6px 18px rgba(15,23,42,.06);
+      --r-xl:22px; --r-lg:16px; --r-md:12px;
+      --emer:#10b981; --emer-700:#047857;
+      --sky:#0ea5e9; --sky-700:#0369a1;
+      --rose:#f97373;
+    }
+
+    .mx-wrap{max-width:1200px;margin:26px auto;padding:0 18px}
+    .mx-card{background:var(--mx-card);border:1px solid var(--mx-line);border-radius:var(--r-xl);box-shadow:var(--shadow-sm);overflow:hidden}
+    .mx-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--mx-line);background:linear-gradient(180deg,#fbfdff,#ffffff)}
+    .mx-left{display:flex;align-items:center;gap:12px}
+    .mx-ico{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#f97316,#facc15);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px}
+    .mx-title{margin:0;font:800 20px/1.1 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;color:var(--mx-ink)}
+    .mx-sub{margin:3px 0 0;font:500 12px/1.2 ui-sans-serif;color:var(--mx-muted)}
+
+    .mx-kpis{display:flex;flex-wrap:wrap;gap:10px;padding:10px 20px 16px;border-bottom:1px solid var(--mx-line);background:#fbfdff}
+    .mx-kpi{min-width:160px;flex:1;background:#fff;border:1px solid var(--mx-line);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:2px}
+    .mx-kpi .n{font:800 18px/1 ui-sans-serif;color:var(--mx-ink)}
+    .mx-kpi .l{font:600 12px/1.1 ui-sans-serif;color:var(--mx-muted)}
+
+    .mx-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 20px 6px}
+    .mx-search-wrap{flex:1;min-width:230px;position:relative}
+    .mx-search{width:100%;border-radius:999px;border:1px solid var(--mx-line);padding:10px 14px 10px 34px;font-size:13px;color:var(--mx-text);background:#f9fafb;outline:none;transition:border-color .15s, box-shadow .15s, background .15s}
+    .mx-search:focus{border-color:var(--sky);box-shadow:0 0 0 1px rgba(14,165,233,.25);background:#fff}
+    .mx-search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:#9ca3af}
+    .btn{appearance:none;border-radius:999px;border:1px solid transparent;padding:9px 14px;font:800 13px/1 ui-sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+    .btn-primary{background:var(--sky);border-color:var(--sky);color:#fff}
+    .btn-primary:hover{background:var(--sky-700);border-color:var(--sky-700)}
+
+    .mx-table-wrap{padding:8px 20px 18px}
+    .mx-table{width:100%;border-collapse:collapse;font-size:13px}
+    .mx-table thead{background:#f9fafb}
+    .mx-table th,
+    .mx-table td{padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:left;color:var(--mx-text)}
+    .mx-table th{font:700 11px/1.2 ui-sans-serif;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af}
+    .mx-table tbody tr:hover{background:#f8fafc}
+    .mx-tag{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:600;background:#ecfdf5;color:#047857}
+    .mx-tag-dot{width:6px;height:6px;border-radius:999px;background:#22c55e}
+
+    .btn-link{background:transparent;border:none;padding:0;font:600 12px/1 ui-sans-serif;color:#0f172a;text-decoration:underline;cursor:pointer}
+    .btn-link.red{color:#dc2626}
+    .btn-link.red:hover{color:#b91c1c}
+
+    .mx-empty{margin:14px 20px 20px;padding:30px;border:2px dashed var(--mx-line);border-radius:16px;text-align:center;background:#fff;color:#64748b}
+    .mx-empty span{font-size:30px;display:block;margin-bottom:6px}
+  </style>
+
+  @php
+    // Si usas paginación, esto te da el total real
+    $totalMascotas = method_exists($mascotas, 'total') ? $mascotas->total() : $mascotas->count();
+  @endphp
+
+  <div class="mx-wrap">
+    <div class="mx-card">
+      <div class="mx-head">
+        <div class="mx-left">
+          <div class="mx-ico">🐾</div>
+          <div>
+            <h1 class="mx-title">Lista de Mascotas</h1>
+            <p class="mx-sub">Administra tus mascotas, sus datos y sus dueños.</p>
+          </div>
         </div>
-    </div>
+        <a href="{{ route('mascotas.create') }}" class="btn btn-primary">
+          + Nueva Mascota
+        </a>
+      </div>
 
-    {{-- TARJETA CENTRADA --}}
-    <div class="max-w-5xl mx-auto px-4 pb-16 -mt-8 relative z-30">
-        <div class="bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 overflow-hidden">
-
-            {{-- Contenido --}}
-            <div class="p-6 md:p-8">
-                {{-- Mensaje de éxito --}}
-                @if (session('ok'))
-                    <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-                        {{ session('ok') }}
-                    </div>
-                @endif
-
-                {{-- Búsqueda --}}
-                <form method="GET" action="{{ route('mascotas.index') }}" class="mb-6 flex flex-col sm:flex-row gap-3 items-center">
-                    <input
-                        type="text"
-                        name="q"
-                        value="{{ $q }}"
-                        placeholder="Buscar por nombre, especie, raza o dueño…"
-                        class="border rounded-lg p-2 w-full sm:flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                    />
-                    <div class="flex gap-2">
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                            Buscar
-                        </button>
-                        <a href="{{ route('mascotas.create') }}"
-                           class="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition font-medium">
-                            + Nueva
-                        </a>
-                    </div>
-                </form>
-
-                {{-- Tabla responsive centrada --}}
-                {{-- Tabla responsive centrada y proporcionada --}}
-<div class="overflow-x-auto">
-  <table class="w-full table-fixed border-collapse text-sm text-gray-700">
-    {{-- define los anchos de columnas (suman ~100%) --}}
-    <colgroup>
-      <col style="width: 6%">
-      <col style="width: 18%">
-      <col style="width: 16%">
-      <col style="width: 16%">
-      <col style="width: 10%">
-      <col style="width: 18%">
-      <col style="width: 16%">
-    </colgroup>
-
-    <thead>
-      <tr class="bg-gradient-to-r from-blue-100 to-indigo-100 text-gray-700 border-b border-gray-300">
-        <th class="px-4 py-2 text-left font-semibold">#</th>
-        <th class="px-4 py-2 text-left font-semibold">Nombre</th>
-        <th class="px-4 py-2 text-left font-semibold">Especie</th>
-        <th class="px-4 py-2 text-left font-semibold">Raza</th>
-        <th class="px-4 py-2 text-left font-semibold">Edad</th>
-        <th class="px-4 py-2 text-left font-semibold">Dueño</th>
-        <th class="px-4 py-2 text-center font-semibold">Acciones</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      @forelse ($mascotas as $m)
-        @php
-          $ownerName = (is_numeric($m->dueno) && $m->owner) ? $m->owner->name : ($m->dueno ?? '—');
-        @endphp
-        <tr class="border-b last:border-0 hover:bg-gray-50 transition">
-          <td class="px-4 py-2 text-gray-500">
-            {{ $loop->iteration + ($mascotas->currentPage()-1)*$mascotas->perPage() }}
-          </td>
-          <td class="px-4 py-2 truncate">{{ $m->nombre }}</td>
-          <td class="px-4 py-2 truncate">{{ $m->especie }}</td>
-          <td class="px-4 py-2 truncate">{{ $m->raza ?? '—' }}</td>
-          <td class="px-4 py-2">{{ $m->edad ?? '—' }}</td>
-          <td class="px-4 py-2 truncate">{{ $ownerName }}</td>
-          <td class="px-4 py-2 text-center">
-            <div class="inline-flex items-center gap-3">
-              <a href="{{ route('mascotas.edit', $m) }}"
-                 class="text-blue-600 hover:underline font-medium">Editar</a>
-              <form action="{{ route('mascotas.destroy', $m) }}" method="POST"
-                    onsubmit="return confirm('¿Eliminar esta mascota?')" class="inline">
-                @csrf @method('DELETE')
-                <button type="submit" class="text-red-600 hover:underline font-medium">Eliminar</button>
-              </form>
-            </div>
-          </td>
-        </tr>
-      @empty
-        <tr>
-          <td colspan="7" class="px-4 py-6 text-center text-gray-500">
-            No hay mascotas registradas
-          </td>
-        </tr>
-      @endforelse
-    </tbody>
-  </table>
-</div>
-
-
-                {{-- Paginación --}}
-                <div class="mt-6">
-                    {{ $mascotas->links() }}
-                </div>
-            </div>
+      {{-- KPIs pequeños arriba de la tabla --}}
+      <div class="mx-kpis">
+        <div class="mx-kpi">
+          <div class="n">{{ $totalMascotas }}</div>
+          <div class="l">Mascotas registradas</div>
         </div>
+        <div class="mx-kpi">
+          <div class="n">{{ $mascotas->where('especie', 'perro')->count() }}</div>
+          <div class="l">Perros</div>
+        </div>
+        <div class="mx-kpi">
+          <div class="n">{{ $mascotas->where('especie', 'gato')->count() }}</div>
+          <div class="l">Gatos</div>
+        </div>
+      </div>
+
+      {{-- Buscador + acciones --}}
+      <div class="mx-toolbar">
+        <form class="mx-search-wrap" method="GET" action="{{ route('mascotas.index') }}">
+          <span class="mx-search-ico">🔍</span>
+          <input
+            type="text"
+            name="q"
+            class="mx-search"
+            value="{{ request('q') }}"
+            placeholder="Buscar por nombre, especie, raza o dueño..."
+          >
+        </form>
+      </div>
+
+      {{-- Tabla --}}
+      @if($mascotas->isEmpty())
+        <div class="mx-empty">
+          <span>📭</span>
+          No hay mascotas registradas todavía.
+        </div>
+      @else
+        <div class="mx-table-wrap">
+          <table class="mx-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Especie</th>
+                <th>Raza</th>
+                <th>Edad</th>
+                <th>Dueño</th>
+                <th style="text-align:right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($mascotas as $mascota)
+  @php
+      $index = ($mascotas->firstItem() ?? 0) + $loop->index;
+      // 👇 Aquí usamos directamente el campo 'dueno' de la tabla
+          $dueno = optional($mascota->owner)->name ?? $mascota->dueno ?? '—';
+  @endphp
+  <tr>
+    <td>{{ $index }}</td>
+    <td>
+      <div style="font-weight:600;color:var(--mx-ink);">{{ $mascota->nombre }}</div>
+      <div style="font-size:11px;color:var(--mx-muted);">
+        ID: {{ $mascota->id }}
+      </div>
+    </td>
+    <td>
+      <span class="mx-tag">
+        <span class="mx-tag-dot"></span>
+        {{ $mascota->especie ?? '—' }}
+      </span>
+    </td>
+    <td>{{ $mascota->raza ?? '—' }}</td>
+    <td>{{ $mascota->edad ?? '—' }}</td>
+
+    {{-- 🔹 AQUÍ YA SE VE EL DUEÑO --}}
+    <td>{{ $dueno }}</td>
+
+    <td style="text-align:right">
+  @php
+      $user   = auth()->user();
+      $role   = $user->role ?? null;
+      $userId = $user->id ?? null;
+      $userName = $user->name ?? null;
+
+      // En tu tabla 'mascotas' la columna 'dueno' a veces tiene id y otras veces nombre
+      $ownerRaw = $mascota->dueno ?? null;
+
+      // Es dueño si:
+      // - dueno guarda el id del usuario  (1, 2, ...)
+      // - o dueno guarda el nombre del usuario ('jhon', 'juan', ...)
+      $isOwner = ($ownerRaw == $userId) || ((string)$ownerRaw === (string)$userName);
+  @endphp
+
+  @if(
+      in_array($role, ['admin', 'recepcionista'])  // admin y recepcionista siempre pueden
+      || (in_array($role, ['user', 'cliente']) && $isOwner) // cliente solo si es su mascota
+  )
+      <a href="{{ route('mascotas.edit', $mascota) }}" class="btn-link">
+        Editar
+      </a>
+
+      <form action="{{ route('mascotas.destroy', $mascota) }}"
+            method="POST"
+            style="display:inline-block;margin-left:8px"
+            onsubmit="return confirm('¿Seguro que deseas eliminar esta mascota?');">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="btn-link red">
+          Eliminar
+        </button>
+      </form>
+  @else
+      <span style="font-size:11px;color:#9ca3af;font-style:italic;">
+        Solo lectura
+      </span>
+  @endif
+</td>
+
+  </tr>
+@endforeach
+
+            </tbody>
+          </table>
+
+          <div class="mt-4">
+            {{ $mascotas->links() }}
+          </div>
+        </div>
+      @endif
     </div>
+  </div>
 </x-app-layout>

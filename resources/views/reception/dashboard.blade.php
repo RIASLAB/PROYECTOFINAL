@@ -62,11 +62,7 @@
         <i class="fas fa-list"></i><span>Lista de Citas</span>
       </a>
 
-      {{-- Clientes --}}
-      <a href="{{ \Illuminate\Support\Facades\Route::has('clientes.index') ? route('clientes.index') : (\Illuminate\Support\Facades\Route::has('users.index') ? route('users.index') : '#') }}" class="opt">
-        <i class="fas fa-users"></i><span>Clientes</span>
-      </a>
-
+      
       {{-- Mascotas --}}
       <a href="{{ \Illuminate\Support\Facades\Route::has('mascotas.index') ? route('mascotas.index') : '#' }}" class="opt">
         <i class="fas fa-paw"></i><span>Mascotas</span>

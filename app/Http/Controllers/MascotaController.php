@@ -7,14 +7,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 
+
+  
+
 class MascotaController extends Controller
 {
-    /**
-     * Columna de dueño (tu BD usa 'dueno' varchar).
-     */
-    private function ownerColumn(): ?string
+
+      private function ownerColumn(): ?string
     {
-        return Schema::hasColumn('mascotas', 'dueno') ? 'dueno' : null;
+        // busca la columna que guarda el dueño en la tabla mascotas
+        foreach (['dueno', 'user_id', 'owner_id', 'cliente_id', 'client_id', 'usuario_id'] as $col) {
+            if (Schema::hasColumn('mascotas', $col)) return $col;
+        }
+        return null;
     }
 
     /**
@@ -37,27 +42,39 @@ class MascotaController extends Controller
         });
     }
 
-    public function index(Request $request)
-    {
-        $q = trim((string) $request->q);
+    
+     public function index(Request $request)
+{
+    $user = auth()->user();
+    $role = $user->role ?? null;
 
-        $mascotas = Mascota::query();
-        $this->applyOwnerFilterToMascotas($mascotas);
+    $q = $request->input('q');
 
-        $mascotas = $mascotas
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($w) use ($q) {
-                    $w->where('nombre', 'like', "%$q%")
-                      ->orWhere('especie', 'like', "%$q%")
-                      ->orWhere('raza', 'like', "%$q%");
-                });
-            })
-            ->orderByDesc('id')
-            ->paginate(10)
-            ->withQueryString();
+    $mascotas = \App\Models\Mascota::query()
+        ->when($q, function ($query) use ($q) {
+            $query->where('nombre', 'like', "%{$q}%")
+                ->orWhere('especie', 'like', "%{$q}%")
+                ->orWhere('raza', 'like', "%{$q}%")
+                ->orWhere('dueno', 'like', "%{$q}%");
+        })
+        ->when($role === 'user' || $role === 'cliente', function ($query) use ($user) {
+            // 👇 Filtrar solo las mascotas del cliente autenticado
+            $query->where(function ($q2) use ($user) {
+                $q2->where('dueno', $user->id)
+                   ->orWhere('dueno', $user->name);
+            });
+        })
+        ->orderBy('id', 'asc')
+        ->paginate(10);
 
-        return view('mascotas.index', compact('mascotas', 'q'));
-    }
+    // Contadores
+    $total = $mascotas->total();
+    $perros = $mascotas->where('especie', 'perro')->count();
+    $gatos = $mascotas->where('especie', 'gato')->count();
+
+    return view('mascotas.index', compact('mascotas', 'total', 'perros', 'gatos'));
+}
+
 
     public function create()
     {

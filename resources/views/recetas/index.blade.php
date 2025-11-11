@@ -33,6 +33,17 @@
     .btn-amber{background:var(--rx-amber);color:#111827;border-color:var(--rx-amber)} .btn-amber:hover{background:#d97706;color:#fff}
     .btn-emerald{background:var(--rx-emerald);color:#fff;border-color:var(--rx-emerald)} .btn-emerald:hover{background:#059669}
 
+
+
+        .btn-gray{
+      background:#f1f5f9;
+      color:#0f172a;
+      border-color:#e5e7eb;
+    }
+    .btn-gray:hover{
+      background:#e5e7eb;
+    }
+
     .rx-empty{margin:20px;padding:40px;border:1px dashed var(--rx-border);border-radius:16px;text-align:center;background:#fff}
     .rx-empty p{color:#475569;margin-top:6px}
     .rx-alert{margin:16px 20px 0;border:1px solid #86efac;background:#f0fdf4;color:#166534;padding:12px;border-radius:12px}
@@ -66,6 +77,23 @@
 
         {{-- Botones a la derecha (misma estética) --}}
         <div class="flex items-center gap-2">
+           {{-- 🔙 Volver a "Mis historias clínicas" según el rol --}}
+          @php
+              $role = auth()->user()->role ?? null;
+
+              // Elegimos la ruta según el rol
+              $backRouteName = match ($role) {
+                  'veterinario' => 'vet.historias.mine',
+                  'user'        => 'client.historias.mine',
+                  default       => null,
+              };
+          @endphp
+
+          @if($backRouteName)
+            <a href="{{ route($backRouteName) }}" class="btn btn-gray">
+              ← Volver a historias
+            </a>
+          @endif
           {{-- Vet/Admin: Enviar a caja / Retirar de caja --}}
           @if(auth()->check() && in_array(auth()->user()->role, ['veterinario','admin']))
             @if(!empty($historia->pendiente_cobro) && $historia->pendiente_cobro)

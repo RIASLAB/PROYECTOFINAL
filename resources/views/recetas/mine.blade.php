@@ -79,9 +79,6 @@
           @if(Route::has('recetas.edit'))
             <a href="{{ route('recetas.edit', $r->id) }}" class="btn btn-warn">Editar</a>
           @endif
-          @if(Route::has('facturas.createFromHistoria'))
-            <a href="{{ route('facturas.createFromHistoria', $r->historia_id) }}" class="btn btn-success">Facturar</a>
-          @endif
         </div>
       </div>
       @endforeach

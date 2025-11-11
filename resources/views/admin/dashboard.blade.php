@@ -56,29 +56,9 @@
                     <img src="{{ asset('images/icons/calendar.png') }}" alt="">
                     <div class="t">Citas</div>
                 </a>
-                <a class="opt" href="{{ $link('clientes.index') }}">
-                    <img src="{{ asset('images/icons/clients.png') }}" alt="">
-                    <div class="t">Clientes</div>
-                </a>
                 <a class="opt" href="{{ $link('mascotas.index') }}">
                     <img src="{{ asset('images/icons/paw.png') }}" alt="">
                     <div class="t">Mascotas</div>
-                </a>
-                <a class="opt" href="{{ $link('citas.pdf') }}">
-                    <img src="{{ asset('images/icons/report.png') }}" alt="">
-                    <div class="t">Reportes</div>
-                </a>
-                <a class="opt" href="{{ $link('servicios.index') }}">
-                    <img src="{{ asset('images/icons/services.png') }}" alt="">
-                    <div class="t">Servicios</div>
-                </a>
-                <a class="opt" href="{{ $link('veterinarios.index') }}">
-                    <img src="{{ asset('images/icons/stethoscope.png') }}" alt="">
-                    <div class="t">Veterinarios</div>
-                </a>
-                <a class="opt" href="{{ $link('facturas.index') }}">
-                    <img src="{{ asset('images/icons/invoice.png') }}" alt="">
-                    <div class="t">Facturas</div>
                 </a>
             </div>
         </div>

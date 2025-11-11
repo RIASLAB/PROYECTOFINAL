@@ -14,11 +14,10 @@
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 @php
-  // Pon dark/tema cuando estés en agenda o en recepción
-  $isAgenda = request()->routeIs('agenda.*');
-  $isReception = request()->routeIs('reception.*');
-  $bodyClasses = 'font-sans antialiased ' . (($isAgenda || $isReception) ? 'bg-[#0b1520] text-slate-100' : 'bg-gray-100');
+  // Fondo claro para todas las vistas (sin modo oscuro)
+  $bodyClasses = 'font-sans antialiased bg-gray-100 text-gray-900';
 @endphp
+
 
 <body class="{{ $bodyClasses }}">
 

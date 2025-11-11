@@ -23,7 +23,10 @@ class CitaController extends Controller
      */
     private function ownerColumn(): ?string
     {
-        return Schema::hasColumn('mascotas', 'dueno') ? 'dueno' : null;
+        foreach (['dueno', 'user_id', 'owner_id', 'cliente_id', 'client_id', 'usuario_id'] as $col) {
+            if (Schema::hasColumn('mascotas', $col)) return $col;
+        }
+        return null;
     }
 
     /**
@@ -68,21 +71,43 @@ class CitaController extends Controller
     /**
      * Listado de citas (solo las del usuario actual) con búsqueda agrupada
      */
-    public function index(Request $request)
+     public function index(Request $request)
     {
-        $q = trim((string) $request->q);
+        $this->authorize('viewAny', Cita::class);
 
-        $citas = Cita::with('mascota')
-            ->tap(fn ($qry) => $this->scopeOnlyMy($qry))
-            ->when($q !== '', function ($query) use ($q) {
-                // Agrupamos los OR para que no rompan el filtro OnlyMy
-                $query->where(function ($s) use ($q) {
-                    $s->where('motivo', 'like', "%{$q}%")
-                      ->orWhere('observaciones', 'like', "%{$q}%")
-                      ->orWhereHas('mascota', fn ($mq) => $mq->where('nombre', 'like', "%{$q}%"));
+        $q    = $request->q;
+        $user = Auth::user();
+
+        $query = Cita::with(['mascota', 'vet']);
+
+        if ($user) {
+            // 👤 CLIENTE: solo sus citas (las de sus mascotas)
+            if ($user->role === 'cliente') {
+                if ($col = $this->ownerColumn()) {
+                    $query->whereHas('mascota', function ($q2) use ($col, $user) {
+                        $q2->where($col, $user->id);
+                    });
+                }
+            }
+
+            // 👨‍⚕️ VETERINARIO: si tienes columna vet_id, filtra por él
+            elseif ($user->role === 'veterinario' && Schema::hasColumn('citas', 'vet_id')) {
+                $query->where('vet_id', $user->id);
+            }
+
+            // 🧑‍💼 admin / recepcionista => sin filtro, ven todo
+        }
+
+        $citas = $query
+            ->when($q, function ($qBuilder) use ($q) {
+                $qBuilder->where(function ($sub) use ($q) {
+                    $sub->where('motivo', 'like', "%{$q}%")
+                        ->orWhereHas('mascota', fn ($m) =>
+                            $m->where('nombre', 'like', "%{$q}%")
+                        );
                 });
             })
-            ->orderByDesc('id')
+            ->orderBy('fecha', 'desc')
             ->paginate(10)
             ->withQueryString();
 

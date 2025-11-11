@@ -16,7 +16,21 @@
     </div>
 
     <div class="ag-header-actions">
-      <a href="{{ route('vet.dashboard') }}" class="btn btn-back">⬅ Volver al Panel</a>
+      @php
+    $role = auth()->user()->role ?? null;
+
+    $backRoute = match ($role) {
+        'admin'         => 'admin.dashboard',
+        'veterinario'   => 'vet.dashboard',
+        'recepcionista' => 'reception.dashboard',
+        default         => 'client.dashboard',
+    };
+@endphp
+
+<a href="{{ route($backRoute) }}" class="btn btn-back">
+    Volver al Panel
+</a>
+
       @if(Route::has('citas.create'))
         <a href="{{ route('citas.create') }}" class="btn btn-primary">➕ Nueva Cita</a>
       @endif
