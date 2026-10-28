@@ -14,6 +14,7 @@ class Historia extends Model
     ];
      protected $casts = [
         'pendiente_cobro' => 'boolean',
+        'enviado_caja_at' => 'datetime',
     ];
 
     public function cita(){ return $this->belongsTo(\App\Models\Cita::class); }

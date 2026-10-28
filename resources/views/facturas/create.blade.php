@@ -2,16 +2,16 @@
 <x-app-layout>
   <style>
     :root {
-      --bg: #f4f7fb;
+      --bg: #faf6ef;
       --card: #ffffff;
       --ink: #0f172a;
       --ink2: #475569;
       --muted: #94a3b8;
       --ring: #e2e8f0;
       --ring2: #d0d7e2;
-      --sky: #3b82f6;
-      --sky-100: #eff6ff;
-      --sky-700: #1d4ed8;
+      --sky: #14857a;
+      --sky-100: #e7f5f2;
+      --sky-700: #0d6e63;
       --emerald: #10b981;
       --emerald-700: #047857;
       --rose: #ef4444;
@@ -220,7 +220,7 @@
             <h3 class="fx-section-title" style="margin-bottom:12px;">Resumen</h3>
 
             <label class="fx-label">Cliente</label>
-            <input class="fx-inp" name="cliente" placeholder="Nombre del cliente">
+            <input class="fx-inp" name="cliente" placeholder="Nombre del cliente" value="{{ old('cliente', $cliente ?? '') }}">
 
             <div style="height:10px"></div>
 

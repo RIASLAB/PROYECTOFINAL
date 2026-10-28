@@ -1,5 +1,9 @@
 {{-- resources/views/facturas/show.blade.php --}}
 <x-app-layout>
+@php
+  app()->instance('flash.inline', ['ok', 'error']);
+@endphp
+
   <style>
     :root{
       --bg:#f6f9fc; --card:#fff; --ink:#0f172a; --ink2:#475569; --muted:#94a3b8;

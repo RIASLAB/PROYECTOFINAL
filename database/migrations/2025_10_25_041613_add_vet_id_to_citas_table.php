@@ -9,13 +9,13 @@ return new class extends Migration {
     {
         Schema::table('citas', function (Blueprint $table) {
             // nullable para no romper registros existentes
-            $table->unsignedBigInteger('vet_id')->nullable()->after('mascota_id');
-
-            // índice + clave foránea (set null si borran el usuario)
-            $table->index('vet_id');
-            $table->foreign('vet_id')
-                  ->references('id')->on('users')
-                  ->onDelete('set null');
+            if (!Schema::hasColumn('citas', 'vet_id')) {
+                $table->unsignedBigInteger('vet_id')->nullable()->after('mascota_id');
+                $table->index('vet_id');
+                $table->foreign('vet_id')
+                      ->references('id')->on('users')
+                      ->onDelete('set null');
+            }
         });
     }
 

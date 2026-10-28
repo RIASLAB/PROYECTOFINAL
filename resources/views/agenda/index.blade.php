@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+  app()->instance('flash.inline', ['ok']);
+@endphp
 <link rel="stylesheet" href="{{ asset('css/agenda-custom.css') }}">
 
 <div class="ag-wrap">
@@ -81,6 +84,13 @@
     </div>
   </form>
 
+  {{-- Indicación del flujo (prueba de usabilidad: la recepción dudaba entre Asignar y Confirmar) --}}
+  @if(in_array(auth()->user()->role, ['recepcionista','admin']))
+  <p class="ag-hint" style="margin:14px 0 0;padding:10px 14px;border-radius:12px;background:#e7f5f2;color:#0a4f48;font-size:.92rem">
+    Para atender una cita pendiente: <strong>1.</strong> elige el veterinario y pulsa <strong>Asignar</strong>; <strong>2.</strong> pulsa <strong>Confirmar</strong>. Si el veterinario ya tiene una cita a esa hora, el sistema no permite asignarlo.
+  </p>
+  @endif
+
   {{-- Mensajes --}}
   @if(session('ok'))
     <div class="ag-alert ag-alert-ok">{{ session('ok') }}</div>
@@ -107,7 +117,7 @@
             <th>Fecha</th>
             <th>Hora</th>
             <th>Mascota</th>
-            <th>Motivo</th>
+            <th>Servicio / motivo</th>
             <th>Vet</th>
             <th>Estado</th>
             <th class="ag-th-right">Acciones</th>
@@ -129,14 +139,14 @@
             <td>{{ \Carbon\Carbon::parse($c->fecha)->format('d/m/Y') }}</td>
             <td>{{ $c->hora }}</td>
             <td class="ag-strong">{{ $c->mascota->nombre ?? '—' }}</td>
-            <td>{{ $c->motivo }}</td>
+            <td><strong>{{ $c->servicio_nombre }}</strong><br>{{ $c->motivo }}</td>
             <td>{{ $c->vet->name ?? 'Sin asignar' }}</td>
             <td><span class="{{ $badge }}">{{ ucfirst($c->estado) }}</span></td>
             <td>
               <div class="ag-actions-row">
                 {{-- Recepcionista/Admin --}}
                 @if(in_array(auth()->user()->role,['admin','recepcionista']))
-                  @if($c->estado !== 'confirmada')
+                  @if($c->estado === 'pendiente')
                     <form method="POST" action="{{ route('agenda.confirmar',$c) }}" class="inline">
                       @csrf @method('PATCH')
                       <button class="btn btn-chip">Confirmar</button>
@@ -153,14 +163,27 @@
                     </select>
                     <button class="btn btn-chip">Asignar</button>
                   </form>
+
+                  @if(!in_array($c->estado, ['cancelada','completada']))
+                    <form method="POST" action="{{ route('agenda.cancelar',$c) }}" class="inline"
+                          onsubmit="return confirm('¿Cancelar esta cita?')">
+                      @csrf @method('PATCH')
+                      <button class="btn btn-chip">Cancelar</button>
+                    </form>
+                  @endif
+                @endif
+
+                {{-- Veterinario: historial completo de la mascota (HU16) --}}
+                @if(auth()->user()->role === 'veterinario' && (int)$c->vet_id === (int)auth()->id() && $c->mascota_id)
+                  <a href="{{ route('vet.mascotas.historias', $c->mascota_id) }}" class="btn btn-chip">Historial</a>
                 @endif
 
                 {{-- Veterinario: sólo si es su cita y no está completada --}}
-                @if(Route::has('citas.completar')
+                @if(Route::has('vet.citas.completar')
                   && auth()->user()->role === 'veterinario'
                   && (int)$c->vet_id === (int)auth()->id()
                   && $c->estado !== 'completada')
-                  <form method="POST" action="{{ route('citas.completar',$c) }}" class="inline">
+                  <form method="POST" action="{{ route('vet.citas.completar',$c) }}" class="inline">
                     @csrf @method('PATCH')
                     <button class="btn btn-good">Marcar atendida</button>
                   </form>
@@ -216,6 +239,7 @@
 
         <div class="ag-card-body">
           <div><span class="ag-strong">Mascota:</span> {{ $c->mascota->nombre ?? '—' }}</div>
+          <div><span class="ag-strong">Servicio:</span> {{ $c->servicio_nombre }}</div>
           <div><span class="ag-strong">Motivo:</span> {{ $c->motivo }}</div>
           <div><span class="ag-strong">Vet:</span> {{ $c->vet->name ?? 'Sin asignar' }}</div>
         </div>
@@ -223,7 +247,7 @@
         <div class="ag-card-actions">
           {{-- Recepcionista/Admin en móvil --}}
           @if(in_array(auth()->user()->role,['admin','recepcionista']))
-            @if($c->estado !== 'confirmada')
+            @if($c->estado === 'pendiente')
               <form method="POST" action="{{ route('agenda.confirmar',$c) }}" class="inline">
                 @csrf @method('PATCH')
                 <button class="btn btn-chip">Confirmar</button>
@@ -240,14 +264,26 @@
               </select>
               <button class="btn btn-chip">Asignar</button>
             </form>
+
+            @if(!in_array($c->estado, ['cancelada','completada']))
+              <form method="POST" action="{{ route('agenda.cancelar',$c) }}" class="inline"
+                    onsubmit="return confirm('¿Cancelar esta cita?')">
+                @csrf @method('PATCH')
+                <button class="btn btn-chip">Cancelar</button>
+              </form>
+            @endif
+          @endif
+
+          @if(auth()->user()->role === 'veterinario' && (int)$c->vet_id === (int)auth()->id() && $c->mascota_id)
+            <a href="{{ route('vet.mascotas.historias', $c->mascota_id) }}" class="btn btn-chip">Historial</a>
           @endif
 
           {{-- Veterinario en móvil --}}
-          @if(Route::has('citas.completar')
+          @if(Route::has('vet.citas.completar')
             && auth()->user()->role === 'veterinario'
             && (int)$c->vet_id === (int)auth()->id()
             && $c->estado !== 'completada')
-            <form method="POST" action="{{ route('citas.completar',$c) }}" class="inline">
+            <form method="POST" action="{{ route('vet.citas.completar',$c) }}" class="inline">
               @csrf @method('PATCH')
               <button class="btn btn-good">Atendida</button>
             </form>

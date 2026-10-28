@@ -179,10 +179,12 @@
           </section>
         @endif
 
-        @if(filled($receta->medicamentos))
+        @if($receta->items->isNotEmpty())
           <section class="section">
             <h3>Medicamentos</h3>
-            <p>{{ $receta->medicamentos }}</p>
+            @foreach($receta->items as $it)
+              <p><strong>{{ $it->medicamento }}</strong>{{ $it->dosis ? ' · '.$it->dosis : '' }}{{ $it->frecuencia ? ' · '.$it->frecuencia : '' }}{{ $it->duracion ? ' · '.$it->duracion : '' }}{{ $it->via ? ' · vía '.$it->via : '' }}</p>
+            @endforeach
           </section>
         @endif
 

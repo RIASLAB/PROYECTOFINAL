@@ -44,25 +44,43 @@ class RecetaController extends Controller
 
 public function store(Request $request, \App\Models\Historia $historia)
 {
-    // Busca la mascota: de la relación historia->cita->mascota_id (ajústalo a tu modelo)
-    $mascotaId = optional(optional($historia->cita)->mascota)->id
-              ?? optional($historia->cita)->mascota_id
-              ?? $request->input('mascota_id');
+    // Solo el veterinario asignado a la cita puede emitir recetas de esta historia
+    abort_unless((int) optional($historia->cita)->vet_id === (int) auth()->id(), 403);
+
+    $mascotaId = optional($historia->cita)->mascota_id;
 
     $data = $request->validate([
-        'indicaciones' => ['required','string'],
-        'notas'        => ['nullable','string'],
-        'fecha'        => ['nullable','date'], // si no la mandas, se colocará ahora
+        'indicaciones'          => ['required','string'],
+        'notas'                 => ['nullable','string'],
+        'fecha'                 => ['nullable','date'],
+        'items'                 => ['required','array'],
+        'items.*.medicamento'   => ['nullable','string','max:255'],
+        'items.*.dosis'         => ['nullable','string','max:255'],
+        'items.*.frecuencia'    => ['nullable','string','max:255'],
+        'items.*.duracion'      => ['nullable','string','max:255'],
+        'items.*.via'           => ['nullable','string','max:255'],
     ]);
 
-    \App\Models\Receta::create([
-        'historia_id'  => $historia->id,
-        'vet_id'       => auth()->id(),
-        'mascota_id'   => $mascotaId,
-        'fecha'        => $data['fecha'] ?? now(),
-        'indicaciones' => $data['indicaciones'],
-        'notas'        => $data['notas'] ?? null,
-    ]);
+    // Medicamentos diligenciados (HU15)
+    $items = collect($data['items'])->filter(fn ($it) => filled($it['medicamento'] ?? null))->values();
+    if ($items->isEmpty()) {
+        return back()->withInput()->withErrors(['items' => 'Registra al menos un medicamento con su dosis.']);
+    }
+
+    \Illuminate\Support\Facades\DB::transaction(function () use ($historia, $mascotaId, $data, $items) {
+        $receta = \App\Models\Receta::create([
+            'historia_id'  => $historia->id,
+            'vet_id'       => auth()->id(),
+            'mascota_id'   => $mascotaId,
+            'fecha'        => $data['fecha'] ?? now(),
+            'indicaciones' => $data['indicaciones'],
+            'notas'        => $data['notas'] ?? null,
+        ]);
+
+        foreach ($items as $it) {
+            $receta->items()->create(collect($it)->only(['medicamento','dosis','frecuencia','duracion','via'])->all());
+        }
+    });
 
     return redirect()
         ->route('vet.recetas.index', $historia)
@@ -72,7 +90,7 @@ public function store(Request $request, \App\Models\Historia $historia)
     // GET /vet/recetas/{receta}
     public function show(Receta $receta)
     {
-        $receta->load('historia.cita.mascota', 'historia.cita.vet');
+        $receta->load('historia.cita.mascota', 'historia.cita.vet', 'items');
 
         abort_unless(
             auth()->check() &&

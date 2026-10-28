@@ -13,11 +13,22 @@ return new class extends Migration {
             // $table->foreign('cita_id')->references('id')->on('citas')->onDelete('cascade');
             // $table->foreign('vet_id')->references('id')->on('users')->onDelete('cascade');
 
-            $table->string('motivo', 255)->after('vet_id');
-            $table->text('anamnesis')->nullable()->after('motivo');
-            $table->text('diagnostico')->nullable()->after('anamnesis');
-            $table->text('tratamiento')->nullable()->after('diagnostico');
-            $table->text('recomendaciones')->nullable()->after('tratamiento');
+            // Guardas: estas columnas pueden existir ya por la migración 2025_10_26_221158
+            if (!Schema::hasColumn('historias', 'motivo')) {
+                $table->string('motivo', 255)->after('vet_id');
+            }
+            if (!Schema::hasColumn('historias', 'anamnesis')) {
+                $table->text('anamnesis')->nullable()->after('motivo');
+            }
+            if (!Schema::hasColumn('historias', 'diagnostico')) {
+                $table->text('diagnostico')->nullable()->after('anamnesis');
+            }
+            if (!Schema::hasColumn('historias', 'tratamiento')) {
+                $table->text('tratamiento')->nullable()->after('diagnostico');
+            }
+            if (!Schema::hasColumn('historias', 'recomendaciones')) {
+                $table->text('recomendaciones')->nullable()->after('tratamiento');
+            }
         });
     }
 

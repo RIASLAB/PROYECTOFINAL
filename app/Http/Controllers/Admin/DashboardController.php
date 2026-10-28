@@ -3,24 +3,30 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cita;
+use App\Models\Factura;
+use App\Models\Mascota;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $usuariosRegistrados = class_exists(\App\Models\User::class) ? \App\Models\User::count() : 0;
-        $clientesActivos     = class_exists(\App\Models\User::class) ? \App\Models\User::where('role','user')->count() : 0;
-        $citasProgramadas    = class_exists(\App\Models\Cita::class) ? \App\Models\Cita::count() : 0;
+        $usuariosRegistrados = User::count();
+        $clientesActivos     = User::whereIn('role', ['user', 'cliente'])->where('status', 'activo')->count();
+        $citasProgramadas    = Cita::whereIn('estado', ['pendiente', 'confirmada'])->whereDate('fecha', '>=', today())->count();
+        $mascotas            = Mascota::count();
+        $veterinarios        = User::where('role', 'veterinario')->count();
+        $facturas            = Factura::count();
 
-        // extras, por si luego los usas
-        $mascotas            = class_exists(\App\Models\Mascota::class) ? \App\Models\Mascota::count() : 0;
-        $servicios           = class_exists(\App\Models\Servicio::class) ? \App\Models\Servicio::count() : 0;
-        $veterinarios        = class_exists(\App\Models\User::class) ? \App\Models\User::where('role','veterinario')->count() : 0;
-        $facturas            = class_exists(\App\Models\Factura::class) ? \App\Models\Factura::count() : 0;
+        // Valor cobrado en el mes actual (HU19)
+        $pagadasMes          = Factura::where('estado', 'pagada')->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()]);
+        $cobradoMes          = (float) (clone $pagadasMes)->sum('total');
+        $facturasPagadasMes  = (clone $pagadasMes)->count();
 
         return view('admin.dashboard', compact(
-            'usuariosRegistrados','clientesActivos','citasProgramadas',
-            'mascotas','servicios','veterinarios','facturas'
+            'usuariosRegistrados', 'clientesActivos', 'citasProgramadas',
+            'mascotas', 'veterinarios', 'facturas', 'cobradoMes', 'facturasPagadasMes'
         ));
     }
 }

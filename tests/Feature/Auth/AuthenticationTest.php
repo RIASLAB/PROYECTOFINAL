@@ -27,7 +27,8 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // Cada rol llega a su propio tablero; un usuario nuevo tiene el rol de cliente
+        $response->assertRedirect(route('client.dashboard', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

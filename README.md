@@ -18,7 +18,7 @@ Permite a administradores, veterinarios, recepcionistas y clientes interactuar e
 ---
 
 ## 🛠️ Tecnologías Utilizadas
-- **Laravel 10** (PHP Framework)  
+- **Laravel 12** (PHP 8.2)  
 - **MySQL / MariaDB** (Base de datos)  
 - **Blade + Tailwind CSS** (Frontend)  
 - **DomPDF** (Generación de PDFs)  
@@ -42,9 +42,9 @@ npm install
 ```
 
 ### 3️⃣ Configurar entorno
-Copia el archivo `.env.example` y renómbralo como `.env`, luego configura tu base de datos:
+Copia el archivo `.env.example` y renómbralo como `.env`, ejecuta `php artisan key:generate` y configura tu base de datos y el administrador:
 ```
-DB_DATABASE=lugovet
+DB_DATABASE=vetapp_db
 DB_USERNAME=root
 DB_PASSWORD=
 ```
@@ -63,14 +63,12 @@ Luego abre en el navegador: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ---
 
-## 👥 Usuarios de Prueba
+## 👥 Primer ingreso
 
-| Rol | Usuario | Contraseña |
-|-----|----------|------------|
-| Admin | admin@lugovet.com | admin123 |
-| Veterinario | vet@lugovet.com | vet123 |
-| Recepcionista | recep@lugovet.com | recep123 |
-| Cliente | cliente@lugovet.com | cliente123 |
+`php artisan migrate --seed` crea un único usuario administrador con el correo y la contraseña definidos en el `.env`
+(`ADMIN_EMAIL` y `ADMIN_PASSWORD`). Después de entrar, cambie la contraseña en **Perfil** y cree los usuarios del
+personal desde **Gestión de usuarios**. Los clientes se registran desde la página de inicio.
+
 
 ---
 
@@ -96,3 +94,34 @@ Proyecto desarrollado por **Jhon Edinson Riascos, Ruben Mina y Luis Fernando Maj
 
 ## 📄 Licencia
 Este proyecto se distribuye con fines académicos y de aprendizaje bajo licencia MIT.
+
+
+---
+
+## 🔧 Correcciones de octubre de 2026 (trabajo de grado)
+
+**Seguridad**
+- El middleware `role` ahora sí restringe cada grupo de rutas por rol (antes dejaba pasar a cualquier usuario autenticado).
+- Los usuarios con estado `inactivo` no pueden iniciar sesión.
+- Caja y facturación solo para recepción y administración.
+- Cada cliente ve únicamente sus mascotas, citas e historias.
+- El cliente ya no puede cambiar el estado de su cita a "confirmada" o "completada".
+- Se corrigió una inyección de HTML (XSS) en el detalle de las historias clínicas.
+- El registro exige la autorización de tratamiento de datos personales (Ley 1581 de 2012).
+
+**Funcionalidades**
+- Tipo de servicio en la cita (consulta general, control, vacunación, ecografía, radiografía, cirugía).
+- La recepción registra mascotas a nombre de un cliente y puede cancelar citas desde la agenda.
+- El cliente consulta las historias clínicas de sus mascotas; el veterinario consulta el historial completo de cada mascota.
+- Historia clínica en PDF, recetas con medicamentos (dosis, frecuencia, duración y vía).
+- Tableros con datos correctos para cada rol (incluye el valor cobrado del mes para el administrador).
+- Anular facturas funciona (nuevo estado `anulada`).
+
+**Base de datos**
+- Las migraciones ya se pueden ejecutar desde cero (`php artisan migrate:fresh`).
+- Tres migraciones nuevas: `enviado_caja_at` en historias, estado `anulada` en facturas y `servicio` en citas.
+  Si ya tienen la base de datos importada, basta con ejecutar `php artisan migrate`.
+
+**Pruebas automatizadas**
+- `tests/Feature/VetAppTest.php` cubre los casos de prueba CP01 a CP10 del trabajo de grado y las demás historias de usuario.
+- Ejecutar con `php artisan test` (usa SQLite en memoria, no toca la base de datos real).

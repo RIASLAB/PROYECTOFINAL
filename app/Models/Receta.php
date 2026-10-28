@@ -22,4 +22,5 @@ class Receta extends Model
     public function historia()  { return $this->belongsTo(Historia::class); }
     public function vet()       { return $this->belongsTo(User::class, 'vet_id'); }
     public function mascota()   { return $this->belongsTo(Mascota::class, 'mascota_id'); }
+    public function items()     { return $this->hasMany(RecetaItem::class); }
 }

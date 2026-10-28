@@ -1,5 +1,33 @@
-body.dark-mode {background: #121212; color: #eaeaea;}
-body.dark-mode header {background: rgba(30,30,30,0.9);}
-body.dark-mode footer {background: #111;}
-body.dark-mode .card {background: #1e1e1e; color: #fff;}
-body.dark-mode .section.alt {background: #1a1a1a;}
+/* ============================================================
+   LUGO VET — Modo oscuro
+   Reemplaza:  public/css/modooscuro.css
+   ============================================================ */
+
+body.dark-mode {
+  --ink:      #e8efee;
+  --ink-soft: #a9c0bd;
+  --cream:    #0e1817;
+  --sand:     #14211f;
+  --white:    #182725;
+  --line:     rgba(255, 255, 255, .09);
+  --teal-900: #d6efe9;
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, .35);
+  --shadow-md: 0 14px 34px rgba(0, 0, 0, .5);
+  background: var(--cream);
+  color: var(--ink);
+}
+
+body.dark-mode header.scrolled {
+  background: rgba(14, 24, 23, .82);
+  border-bottom-color: rgba(255, 255, 255, .08);
+}
+body.dark-mode header.scrolled .logo { color: var(--teal-500); }
+body.dark-mode header.scrolled .nav-links a { color: var(--ink-soft); }
+body.dark-mode header.scrolled #darkModeToggle { background: #16302c; }
+
+body.dark-mode .section h2 { color: var(--teal-500); }
+body.dark-mode .card { background: var(--white); border-color: var(--line); }
+body.dark-mode .card h3 { color: var(--ink); }
+body.dark-mode #equipo .card img { border-color: #16302c; }
+body.dark-mode footer { background: #0a1413; }
+body.dark-mode .btn-login { background: #182725; color: var(--teal-500); }

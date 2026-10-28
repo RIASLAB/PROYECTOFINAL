@@ -7,24 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('citas', function (Blueprint $table) {
-            if (!Schema::hasColumn('citas', 'vet_id')) {
+        // Solo actúa si la columna no existe (la migración 2025_10_25_041613 ya la crea con su clave foránea)
+        if (!Schema::hasColumn('citas', 'vet_id')) {
+            Schema::table('citas', function (Blueprint $table) {
                 $table->unsignedBigInteger('vet_id')->nullable()->after('mascota_id');
-                // La FK la añadimos en un paso separado para evitar problemas de motor / colación
-            }
-        });
-
-        // Añadir la FK en un paso aparte (evita errores silenciosos)
-        Schema::table('citas', function (Blueprint $table) {
-            if (Schema::hasColumn('citas', 'vet_id')) {
-                // Evita duplicar claves si ya existe
-                try {
-                    $table->foreign('vet_id')->references('id')->on('users')->nullOnDelete();
-                } catch (\Throwable $e) {
-                    // si ya existía, seguimos sin romper
-                }
-            }
-        });
+                $table->foreign('vet_id')->references('id')->on('users')->nullOnDelete();
+            });
+        }
     }
 
     public function down(): void

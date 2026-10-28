@@ -49,6 +49,15 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Un usuario desactivado por el administrador no puede iniciar sesión (HU17)
+        if ((Auth::user()->status ?? 'activo') === 'inactivo') {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Tu cuenta está inactiva. Comunícate con el administrador.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

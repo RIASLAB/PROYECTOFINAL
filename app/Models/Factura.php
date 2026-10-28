@@ -5,6 +5,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Factura extends Model
 {
+    /** Estados válidos de una factura */
+    public const ESTADOS = ['borrador', 'pendiente', 'pagada', 'anulada'];
+
      protected $fillable = [
         'historia_id','user_id','cliente','mascota',
         'subtotal','impuesto','total','estado','paid_at'

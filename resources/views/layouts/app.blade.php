@@ -29,6 +29,32 @@
   );
 @endphp
 
+
+  {{-- Mensajes de confirmación y error (heurística 1: visibilidad del estado del sistema).
+       Las vistas que ya muestran el mensaje en su propio diseño marcan app('flash.inline'). --}}
+  @php
+    $flashInline = app()->bound('flash.inline') ? app('flash.inline') : [];
+    $flashes = [];
+    foreach (['ok' => 'ok', 'success' => 'ok', 'error' => 'error'] as $key => $type) {
+        if (session($key) && !in_array($key, $flashInline, true)) {
+            $flashes[] = [$type, session($key)];
+        }
+    }
+  @endphp
+  @if($flashes)
+    <div id="lv-toasts" style="position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:380px">
+      @foreach($flashes as [$type, $msg])
+        <div role="{{ $type === 'error' ? 'alert' : 'status' }}"
+             style="display:flex;gap:10px;align-items:flex-start;padding:14px 16px;border-radius:14px;font:500 15px/1.4 system-ui,sans-serif;box-shadow:0 10px 28px rgba(0,0,0,.14);{{ $type === 'error' ? 'background:#fdece8;color:#9a2d12;border:1px solid #ff7a59' : 'background:#e7f5f2;color:#0a4f48;border:1px solid #1aa394' }}">
+          <span aria-hidden="true" style="font-weight:800">{{ $type === 'error' ? '!' : '✓' }}</span>
+          <span style="flex:1">{{ $msg }}</span>
+          <button type="button" onclick="this.parentElement.remove()" aria-label="Cerrar" style="background:none;border:0;cursor:pointer;font-size:18px;line-height:1;color:inherit">×</button>
+        </div>
+      @endforeach
+    </div>
+    <script>setTimeout(function () { var t = document.getElementById('lv-toasts'); if (t) t.remove(); }, 6000);</script>
+  @endif
+
 <div class="min-h-screen">
   @unless($hideNav)
     @include('layouts.navigation')

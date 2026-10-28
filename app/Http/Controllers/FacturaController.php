@@ -24,15 +24,8 @@ class FacturaController extends Controller
      * ======================== */
     public function create()
     {
-        $items = [
-            ['descripcion' => 'Servicio', 'cantidad' => 1, 'precio' => 0, 'subtotal' => 0],
-        ];
-        return view('facturas.create', [
-            'historia' => null,
-            'cliente'  => null,
-            'items'    => $items,
-            'total'    => 0,
-        ]);
+        // Las facturas se generan desde una historia enviada a caja
+        return redirect()->route('caja.index')->with('ok', 'Selecciona una historia enviada a caja para facturarla.');
     }
 
     /* ======================================================
@@ -49,10 +42,9 @@ class FacturaController extends Controller
             return back()->with('error', 'Esta historia ya tiene una factura pagada. No puedes generar otra.');
         }
 
-        $mascota = optional(optional($historia->cita)->mascota);
-        $clienteNombre = optional($mascota)->dueno
-            ?? optional(optional($historia->cita)->cliente)->name
-            ?? null;
+        $mascota = optional($historia->cita)->mascota;
+        // "dueno" guarda el id del cliente: se muestra su nombre (o el valor antiguo si no es un id)
+        $clienteNombre = optional(optional($mascota)->owner)->name ?? optional($mascota)->dueno;
 
         $recetas = $historia->recetas()->latest()->get();
 
@@ -87,7 +79,8 @@ class FacturaController extends Controller
     {
         $data = $request->validate([
             'cliente'               => ['nullable','string','max:255'],
-            'historia_id'           => ['nullable','integer'],
+            // Toda factura nace de una historia clínica enviada a caja
+            'historia_id'           => ['required','integer','exists:historias,id'],
             'impuesto'              => ['required','numeric','min:0'],
             'items'                 => ['required','array','min:1'],
             'items.*.descripcion'   => ['required','string','max:255'],
@@ -96,6 +89,11 @@ class FacturaController extends Controller
         ], [
             'items.required' => 'Agrega al menos un ítem con cantidad y precio.',
         ]);
+
+        // No se puede generar otra factura para una historia que ya tiene una factura pagada
+        if (!empty($data['historia_id']) && Factura::where('historia_id', $data['historia_id'])->where('estado', 'pagada')->exists()) {
+            return back()->withInput()->with('error', 'Esta historia ya tiene una factura pagada. No puedes generar otra.');
+        }
 
         // Calcular subtotales
         $subtotal = 0;
@@ -178,6 +176,9 @@ class FacturaController extends Controller
         if ($factura->estado === 'anulada') {
             return back()->with('ok', 'La factura ya estaba anulada.');
         }
+        if ($factura->estado === 'pagada') {
+            return back()->with('error', 'No se puede anular una factura pagada.');
+        }
 
         $factura->update([
             'estado'  => 'anulada',
@@ -230,9 +231,12 @@ class FacturaController extends Controller
             ->whereNotNull('enviado_caja_at')
             ->whereBetween('enviado_caja_at', [$start, $end])
             ->when($q, function ($qry) use ($q) {
-                $qry->where('id', $q)
-                    ->orWhereHas('cita.mascota', fn($m) => $m->where('nombre', 'like', "%{$q}%"))
-                    ->orWhereHas('cita.vet', fn($v) => $v->where('name', 'like', "%{$q}%"));
+                // Agrupado para no saltarse el filtro de fechas
+                $qry->where(function ($w) use ($q) {
+                    $w->where('id', $q)
+                      ->orWhereHas('cita.mascota', fn($m) => $m->where('nombre', 'like', "%{$q}%"))
+                      ->orWhereHas('cita.vet', fn($v) => $v->where('name', 'like', "%{$q}%"));
+                });
             })
             ->orderByDesc('enviado_caja_at')
             ->paginate(10)

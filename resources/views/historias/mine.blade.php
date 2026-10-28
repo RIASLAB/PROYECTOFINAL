@@ -1,128 +1,134 @@
 @extends('layouts.app')
 
 @section('content')
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
   :root{
-    --hx-bg:#f6f9fc;
+    --hx-bg:#faf6ef;
     --hx-card:#ffffff;
-    --hx-ink:#0f172a;
-    --hx-ink-2:#334155;
-    --hx-ink-3:#64748b;
-    --hx-border:#eef2f7;
-    --hx-border-2:#e6edf6;
-    --hx-prim:#0ea5e9;
-    --hx-prim-600:#0284c7;
-    --hx-green:#16a34a;
-    --hx-red:#ef4444;
-    --hx-blue:#3b82f6;
-    --hx-graychip:#e2e8f0;
+    --hx-ink:#182a2a;
+    --hx-ink-2:#44595a;
+    --hx-ink-3:#7a8d8b;
+    --hx-border:rgba(20,60,56,.12);
+    --hx-border-2:rgba(20,60,56,.14);
+    --hx-prim:#14857a;
+    --hx-prim-600:#0d6e63;
+    --hx-teal-900:#0a4f48;
+    --hx-teal-50:#e7f5f2;
+    --hx-coral:#ff7a59;
+    --hx-amber:#f4b740;
+    --fd:"Fraunces",Georgia,serif;
+    --fb:"Plus Jakarta Sans",system-ui,sans-serif;
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
   body{
-    font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font-family:var(--fb);
     background:var(--hx-bg);
     animation:fadeInBody 0.5s ease;
   }
 
-  .hx-wrap{max-width:1200px;margin:26px auto;padding:0 18px; animation:fadeInUp 0.5s ease;}
+  .hx-wrap{max-width:1200px;margin:26px auto;padding:0 18px 48px; animation:fadeInUp 0.5s ease;}
   .hx-card, .hx-card-lite{
     background:var(--hx-card);
     border:1px solid var(--hx-border);
-    border-radius:18px;
-    box-shadow:0 15px 50px rgba(2,6,12,.06);
+    border-radius:20px;
+    box-shadow:0 4px 14px rgba(13,84,76,.08);
     transition:transform .3s ease, box-shadow .3s ease;
   }
-  .hx-card-lite{box-shadow:0 10px 32px rgba(2,6,12,.05);}
-  .hx-card:hover, .hx-card-lite:hover{transform:translateY(-3px); box-shadow:0 20px 60px rgba(2,6,12,.08);}
+  .hx-card-lite{box-shadow:0 4px 14px rgba(13,84,76,.06);}
 
-  .hx-head{display:flex;align-items:center;gap:12px;padding:18px 22px; transition:all .3s ease;}
+  /* Header con banda de marca */
+  .hx-head{
+    display:flex;align-items:center;gap:12px;padding:24px 28px;
+    background:radial-gradient(600px 240px at 12% 0%, rgba(255,122,89,.28), transparent 60%),
+               linear-gradient(135deg,var(--hx-prim-600),var(--hx-teal-900));
+    color:#fff;border-radius:20px 20px 0 0;
+  }
   .hx-head--with-actions{justify-content:space-between;}
-  .hx-head-left{display:flex;align-items:center;gap:12px;}
+  .hx-head-left{display:flex;align-items:center;gap:16px;}
   .hx-head .hx-ico{
-    width:48px;height:48px;border-radius:14px;
-    background:linear-gradient(135deg,#67e8f9,#0ea5e9);
+    width:54px;height:54px;border-radius:16px;
+    background:rgba(255,255,255,.16);
     display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;
-    transition:transform .3s ease, box-shadow .3s ease;
   }
-  .hx-head .hx-ico:hover{transform:scale(1.1);box-shadow:0 6px 15px rgba(14,165,233,.4);}
-  .hx-title{margin:0;font-weight:800;color:var(--hx-ink);font-size:20px;transition:color .3s ease;}
-  .hx-title:hover{color:var(--hx-prim);}
-  .hx-sub{margin:0;font-size:13px;color:var(--hx-ink-3);}
+  .hx-title{margin:0;font-family:var(--fd);font-weight:600;color:#fff;font-size:1.6rem;letter-spacing:-.02em;}
+  .hx-sub{margin:0;font-size:.9rem;color:rgba(255,255,255,.9);}
 
-  .hx-head-actions{display:flex;align-items:center;gap:10px;}
+  .hx-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .hx-btn{
-    appearance:none;border-radius:12px;border:1px solid transparent;padding:.55rem 1rem;font-weight:800;
+    appearance:none;border-radius:999px;border:1px solid transparent;padding:.6rem 1.1rem;font-family:var(--fb);font-weight:700;
     font-size:14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
-    transition:all .25s ease;
+    transition:all .22s ease;
   }
   .hx-btn-prim{background:var(--hx-prim);color:#fff;border-color:var(--hx-prim);}
-  .hx-btn-prim:hover{background:var(--hx-prim-600); transform:scale(1.05);}
-  .hx-btn-ghost{background:#eef2f7;color:var(--hx-ink-2);border-color:#e5e7eb;}
-  .hx-btn-ghost:hover{background:#e2e8f0; transform:scale(1.05);}
-  .hx-btn-back{background:#0f172a;color:#fff;border-color:#0f172a;}
-  .hx-btn-back:hover{background:#1e293b;transform:scale(1.05);}
+  .hx-btn-prim:hover{background:var(--hx-prim-600); transform:translateY(-2px);}
+  .hx-btn-ghost{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3);}
+  .hx-btn-ghost:hover{background:rgba(255,255,255,.28); transform:translateY(-2px);}
+  .hx-btn-back{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3);}
+  .hx-btn-back:hover{background:rgba(255,255,255,.28);transform:translateY(-2px);}
 
-  .hx-hline{height:1px;background:linear-gradient(90deg,#f1f5f9 0,#e6eef7 50%,#f1f5f9 100%);margin:0;}
+  .hx-hline{height:1px;background:var(--hx-border);margin:0;}
 
   .hx-grid-3{display:grid;grid-template-columns:1fr;gap:14px;}
   @media (min-width:768px){ .hx-grid-3{grid-template-columns:repeat(3,1fr);} }
 
   .hx-field label{display:block;font-size:12px;font-weight:700;color:var(--hx-ink-2);margin-bottom:6px;}
   .hx-inp{
-    width:100%;border:1px solid var(--hx-border-2);background:#f8fbff;color:var(--hx-ink);
-    border-radius:12px;padding:10px 12px;font-size:14px;
-    transition:border-color .3s ease, box-shadow .3s ease, background .3s ease;
+    width:100%;border:1.5px solid var(--hx-border-2);background:#fff;color:var(--hx-ink);
+    border-radius:12px;padding:10px 12px;font-family:var(--fb);font-size:14px;
+    transition:border-color .25s ease, box-shadow .25s ease;
   }
   .hx-inp:focus{
-    outline:0;background:#fff;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.18);
+    outline:0;background:#fff;border-color:var(--hx-prim);box-shadow:0 0 0 4px rgba(26,163,148,.16);
   }
 
   .hx-actions{display:flex;gap:10px;justify-content:flex-end;}
 
-  .hx-chip{font-size:11px;font-weight:800;border-radius:999px;padding:.35rem .55rem;border:1px solid transparent;display:inline-flex;align-items:center;gap:.35rem;}
-  .hx-chip-gray{background:#f1f5f9;border-color:#e2e8f0;color:#334155;}
+  .hx-chip{font-size:11px;font-weight:800;border-radius:999px;padding:.35rem .6rem;border:1px solid transparent;display:inline-flex;align-items:center;gap:.35rem;}
+  .hx-chip-gray{background:var(--hx-teal-50);border-color:transparent;color:var(--hx-prim-600);}
 
   .hx-grid{display:grid;grid-template-columns:1fr;gap:14px;}
   @media (min-width:768px){ .hx-grid{grid-template-columns:repeat(2,1fr);} }
   @media (min-width:1024px){ .hx-grid{grid-template-columns:repeat(3,1fr);} }
 
   .hx-hcard{
-    background:#fff;border:1px solid #edf3f9;border-radius:16px;
-    box-shadow:0 10px 30px rgba(2,6,12,.06);
-    transition:transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+    position:relative;overflow:hidden;
+    background:#fff;border:1px solid var(--hx-border);border-radius:18px;
+    box-shadow:0 4px 14px rgba(13,84,76,.08);
+    transition:transform .25s ease, box-shadow .25s ease;
   }
+  .hx-hcard::before{content:"";position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--hx-prim),var(--hx-coral));transform:scaleX(0);transform-origin:left;transition:transform .3s ease;}
   .hx-hcard:hover{
-    transform:translateY(-5px);
-    box-shadow:0 18px 45px rgba(2,6,12,.1);
-    border-color:#e3eef9;
+    transform:translateY(-6px);
+    box-shadow:0 14px 34px rgba(13,84,76,.14);
   }
+  .hx-hcard:hover::before{transform:scaleX(1);}
   .hx-hcard p{margin:2px 0;font-size:13px;color:var(--hx-ink-2);}
   .hx-hcard b{color:var(--hx-ink);}
 
   .hx-modal-bg{
     position:fixed;top:0;left:0;width:100%;height:100%;
-    background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;
+    background:rgba(8,40,37,.5);display:none;align-items:center;justify-content:center;z-index:50;
     animation:fadeInBg .25s ease;
   }
   .hx-modal{
-    background:#fff;border-radius:16px;max-width:600px;width:90%;
-    box-shadow:0 20px 60px rgba(0,0,0,.2);animation:pop .25s ease;
+    background:#fff;border-radius:18px;max-width:600px;width:90%;
+    box-shadow:0 20px 60px rgba(2,6,12,.25);animation:pop .25s ease;
   }
-  .hx-modal h2{font-weight:800;color:var(--hx-ink);font-size:18px;margin-bottom:6px;}
-  .hx-modal p{margin:4px 0;color:var(--hx-ink-3);font-size:14px;}
+  .hx-modal h2{font-family:var(--fd);font-weight:600;color:var(--hx-teal-900);font-size:1.3rem;margin-bottom:6px;}
+  .hx-modal p{margin:4px 0;color:var(--hx-ink-2);font-size:14px;}
 
   @keyframes fadeInBody{0%{opacity:0}100%{opacity:1}}
   @keyframes fadeInUp{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
   @keyframes fadeInBg{0%{opacity:0}100%{opacity:1}}
   @keyframes pop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
 
-  .hx-hcard:hover .hx-btn{transform:scale(1.05);}
-
   @media (max-width:500px){
-    .hx-head{flex-direction:column;align-items:flex-start;gap:10px;}
+    .hx-head{flex-direction:column;align-items:flex-start;gap:12px;}
     .hx-head-actions{width:100%;justify-content:flex-start;gap:6px;flex-wrap:wrap;}
     .hx-grid-3{grid-template-columns:1fr;}
     .hx-grid{grid-template-columns:1fr;}
@@ -136,14 +142,17 @@
         <div class="hx-head-left">
           <div class="hx-ico">📋</div>
           <div>
-            <h1 class="hx-title">Mis historias clínicas</h1>
-            <p class="hx-sub">Filtra o busca tus historias</p>
+            <h1 class="hx-title">{{ $titulo }}</h1>
+            <p class="hx-sub">Filtra o busca las historias</p>
           </div>
         </div>
         <div class="hx-head-actions">
-          <a href="{{ route('vet.dashboard') }}" class="hx-btn hx-btn-back">⬅ Volver al Panel</a>
-          @if(Route::has('recetas.mine') || Route::has('vet.recetas'))
-            <a href="{{ Route::has('recetas.mine') ? route('recetas.mine') : route('vet.recetas') }}" class="hx-btn hx-btn-ghost">🧾 Recetas</a>
+          @php
+            $volver = $scope === 'client' ? 'client.dashboard' : 'vet.dashboard';
+          @endphp
+          <a href="{{ $scope === 'mascota' ? route('agenda.index') : route($volver) }}" class="hx-btn hx-btn-back">⬅ Volver</a>
+          @if($scope !== 'client')
+            <a href="{{ route('vet.recetas.mine') }}" class="hx-btn hx-btn-ghost">🧾 Recetas</a>
           @endif
         </div>
       </div>
@@ -167,7 +176,7 @@
         </div>
 
         <div class="hx-actions mt-4">
-          <a href="{{ url()->current() }}" class="hx-btn hx-btn-ghost">Limpiar</a>
+          <a href="{{ url()->current() }}" class="hx-btn hx-btn-ghost" style="background:#eef1f0;color:#44595a;border-color:rgba(20,60,56,.14)">Limpiar</a>
           <button class="hx-btn hx-btn-prim" type="submit">Buscar</button>
         </div>
       </form>
@@ -202,10 +211,20 @@
                   </div>
                 </div>
                 <div class="flex justify-between md:justify-end gap-2 mt-3">
-                  @if (Route::has('vet.recetas.index'))
+                  @if ($scope === 'vet')
                     <a href="{{ route('vet.recetas.index', $h->id) }}" class="hx-btn hx-btn-prim" title="Ver o crear recetas de esta historia">💊 Recetas</a>
+                    @if($h->pendiente_cobro)
+                      <span class="hx-chip hx-chip-gray" title="La recepción ya puede cobrarla">En caja</span>
+                    @else
+                      <form method="POST" action="{{ route('historias.enviarCaja', $h->id) }}">
+                        @csrf
+                        <button type="submit" class="hx-btn hx-btn-ghost" title="Enviar esta historia a caja para que la recepción la cobre">💰 Enviar a caja</button>
+                      </form>
+                    @endif
                   @endif
+                  <a href="{{ route('historias.pdf', $h->id) }}" class="hx-btn hx-btn-ghost" title="Descargar en PDF">PDF</a>
                   <button class="hx-btn hx-btn-ghost ver-btn"
+                          style="background:#eef1f0;color:#44595a;border-color:rgba(20,60,56,.14)"
                           data-motivo="{{ $h->motivo }}"
                           data-anamnesis="{{ $h->anamnesis }}"
                           data-diagnostico="{{ $h->diagnostico }}"
@@ -235,7 +254,7 @@
     <div class="hx-modal p-6">
       <div class="flex justify-between items-center mb-4">
         <h2>Detalles de historia</h2>
-        <button id="cerrarModal" class="hx-btn hx-btn-ghost">✕</button>
+        <button id="cerrarModal" class="hx-btn hx-btn-ghost" style="background:#eef1f0;color:#44595a;border-color:rgba(20,60,56,.14)">✕</button>
       </div>
       <div id="detalleContenido" class="text-sm leading-relaxed"></div>
     </div>
@@ -249,17 +268,24 @@
 
     document.querySelectorAll('.ver-btn').forEach(btn=>{
       btn.addEventListener('click',()=>{
-        contenido.innerHTML = `
-          <p><b>Fecha:</b> ${btn.dataset.fecha} · ${btn.dataset.hora}</p>
-          <p><b>Mascota:</b> ${btn.dataset.pet}</p>
-          <p><b>Veterinario:</b> ${btn.dataset.vet}</p>
-          <hr class="my-2">
-          <p><b>Motivo:</b> ${btn.dataset.motivo || '-'}</p>
-          <p><b>Anamnesis:</b> ${btn.dataset.anamnesis || '-'}</p>
-          <p><b>Diagnóstico:</b> ${btn.dataset.diagnostico || '-'}</p>
-          <p><b>Tratamiento:</b> ${btn.dataset.tratamiento || '-'}</p>
-          <p><b>Recomendaciones:</b> ${btn.dataset.recomendaciones || '-'}</p>
-        `;
+        // Se arma con textContent para evitar inyección de HTML (XSS) desde los campos de la historia
+        const filas = [
+          ['Fecha', `${btn.dataset.fecha} · ${btn.dataset.hora}`],
+          ['Mascota', btn.dataset.pet],
+          ['Veterinario', btn.dataset.vet],
+          ['Motivo', btn.dataset.motivo],
+          ['Anamnesis', btn.dataset.anamnesis],
+          ['Diagnóstico', btn.dataset.diagnostico],
+          ['Tratamiento', btn.dataset.tratamiento],
+          ['Recomendaciones', btn.dataset.recomendaciones],
+        ];
+        contenido.replaceChildren(...filas.map(([etiqueta, valor]) => {
+          const p = document.createElement('p');
+          const b = document.createElement('b');
+          b.textContent = etiqueta + ': ';
+          p.append(b, document.createTextNode(valor || '-'));
+          return p;
+        }));
         modal.style.display = 'flex';
       });
     });

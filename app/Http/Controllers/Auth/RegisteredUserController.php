@@ -34,6 +34,10 @@ class RegisteredUserController extends Controller
     'name'     => ['required', 'string', 'max:255'],
     'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
     'password' => ['required', 'confirmed', Password::defaults()], // ✅
+    // Autorización de tratamiento de datos personales (Ley 1581 de 2012 y Decreto 1377 de 2013)
+    'acepta_datos' => ['accepted'],
+], [
+    'acepta_datos.accepted' => 'Debes autorizar el tratamiento de tus datos personales para registrarte.',
 ]);
 
 

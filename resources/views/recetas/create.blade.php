@@ -1,154 +1,160 @@
 <x-app-layout>
-  <style>
-    /* === Botones con estilo consistente y animaciones === */
-    .btn-primary{
-      display:inline-flex !important;
-      align-items:center;
-      justify-content:center;
-      gap:.5rem;
-      padding:.6rem 1.2rem;
-      border-radius:1rem;
-      background:#0284c7;
-      color:#fff !important;
-      font-weight:600;
-      text-decoration:none !important;
-      border:1px solid #0284c7;
-      box-shadow:0 4px 12px rgba(2,132,199,.3);
-      transition:all .25s ease;
-    }
-    .btn-primary:hover{
-      background:#0369a1;
-      transform:translateY(-2px) scale(1.02);
-      box-shadow:0 8px 20px rgba(2,132,199,.4);
-    }
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    .btn-outline{
-      display:inline-flex !important;
-      align-items:center;
-      justify-content:center;
-      gap:.5rem;
-      padding:.6rem 1.2rem;
-      border-radius:1rem;
-      border:1px solid #cbd5e1;
-      background:#fff;
-      color:#334155 !important;
-      font-weight:500;
-      transition:all .25s ease, transform .2s;
-    }
-    .btn-outline:hover{
-      background:#f8fafc;
-      transform:translateY(-1px) scale(1.01);
-      box-shadow:0 2px 10px rgba(51,65,85,.1);
-    }
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-    /* === Tarjeta de formulario con animaciones suaves === */
-    .card-form{
-      background:#fff;
-      border-radius:1.5rem;
-      box-shadow:0 6px 20px rgba(0,0,0,0.08);
-      border:1px solid #f1f5f9;
-      overflow:hidden;
-      transition:transform .3s ease, box-shadow .3s ease;
-    }
-    .card-form:hover{
-      transform:translateY(-3px);
-      box-shadow:0 12px 30px rgba(0,0,0,0.12);
-    }
+        .pf {
+            --ink:#182a2a; --ink-soft:#5a6f6e;
+            --teal-900:#0a4f48; --teal-700:#0d6e63; --teal-600:#14857a; --teal-500:#1aa394; --teal-50:#e7f5f2;
+            --coral:#ff7a59; --coral-dark:#ef5c39;
+            --cream:#faf6ef; --white:#fff; --line:rgba(20,60,56,.14);
+            --shadow-sm:0 4px 14px rgba(13,84,76,.08);
+            --radius:20px; --fd:"Fraunces",Georgia,serif; --fb:"Plus Jakarta Sans",system-ui,sans-serif;
+            font-family:var(--fb); color:var(--ink);
+        }
+        body { background:var(--cream) !important; }
+        .pf * { box-sizing:border-box; }
+        .pf-page { padding:34px 18px 60px; }
+        .pf-shell { max-width:720px; margin:0 auto; }
 
-    /* === Inputs y textarea animados === */
-    input[type="datetime-local"],
-    textarea{
-      transition:all .25s ease;
-    }
-    input[type="datetime-local"]:focus,
-    textarea:focus{
-      border-color:#0284c7;
-      box-shadow:0 0 0 3px rgba(2,132,199,.2);
-      background:#fefefe;
-    }
+        .pf-head {
+            display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+            background:radial-gradient(600px 240px at 12% 0%, rgba(255,122,89,.28), transparent 60%),
+                       linear-gradient(135deg,var(--teal-700),var(--teal-900));
+            color:#fff; border-radius:var(--radius); padding:24px 28px; box-shadow:var(--shadow-sm); margin-bottom:22px;
+        }
+        .pf-head .l { display:flex; align-items:center; gap:16px; }
+        .pf-head .ic { width:54px; height:54px; border-radius:16px; background:rgba(255,255,255,.16); display:grid; place-items:center; font-size:1.6rem; }
+        .pf-head h1 { font-family:var(--fd); font-weight:600; font-size:1.55rem; letter-spacing:-.02em; margin:0; }
+        .pf-head p { margin:3px 0 0; opacity:.9; font-size:.9rem; }
+        .pf-back { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); color:#fff; padding:10px 16px; border-radius:999px; font-weight:700; font-size:.88rem; text-decoration:none; transition:background .2s; }
+        .pf-back:hover { background:rgba(255,255,255,.3); }
 
-    /* === Animaciones de fade y subida === */
-    .fade-up{
-      opacity:0;
-      transform:translateY(10px);
-      animation:fadeUp 0.5s forwards;
-    }
-    @keyframes fadeUp{
-      to{opacity:1; transform:translateY(0);}
-    }
+        .pf-card { background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-sm); overflow:hidden; }
+        .pf-card__top { padding:22px 28px 6px; }
+        .pf-card__top h2 { font-family:var(--fd); font-weight:600; font-size:1.2rem; color:var(--teal-900); margin:0; }
+        .pf-card__top p { margin:4px 0 0; color:var(--ink-soft); font-size:.88rem; }
+        .pf-divider { height:1px; background:var(--line); margin:16px 28px 0; }
+        .pf-body { padding:24px 28px 28px; }
 
-    /* === Responsividad === */
-    @media (max-width:640px){
-      .flex{flex-direction:column;}
-      .flex > *{width:100%;}
-      .flex.justify-end{justify-content:flex-start;}
-    }
-  </style>
+        .pf-alert { margin-bottom:22px; border-radius:14px; border:1px solid var(--coral); background:#fdece8; color:var(--coral-dark); padding:14px 16px; display:flex; gap:10px; align-items:flex-start; }
+        .pf-alert ul { margin:6px 0 0; padding-left:18px; font-size:.88rem; }
 
-  <div class="max-w-5xl mx-auto p-6 fade-up">
-    {{-- HEADER --}}
-    <div class="flex items-center justify-between mb-6 fade-up" style="animation-delay:.1s;">
-      <div class="flex items-center gap-3">
-        <div class="h-10 w-10 rounded-2xl bg-amber-100 flex items-center justify-center transition-transform duration-300 hover:scale-110">
-          <span class="text-amber-600 text-xl">🩺</span>
+        .pf-field { margin-bottom:20px; }
+        .pf-field label { display:block; font-weight:600; font-size:.9rem; margin-bottom:7px; }
+        .pf-field label .req { color:var(--coral); }
+        .pf-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+
+        .pf-input {
+            width:100%; padding:12px 15px; font-family:var(--fb); font-size:.97rem; color:var(--ink);
+            background:var(--white); border:1.5px solid var(--line); border-radius:12px; outline:none;
+            transition:border-color .2s, box-shadow .2s;
+        }
+        .pf-input::placeholder { color:#9bb0ad; }
+        .pf-input:focus { border-color:var(--teal-500); box-shadow:0 0 0 4px rgba(26,163,148,.16); }
+
+        .pf-actions { display:flex; justify-content:flex-end; gap:12px; padding-top:8px; flex-wrap:wrap; }
+        .pf-btn { appearance:none; border:none; border-radius:12px; padding:13px 24px; font-family:var(--fb); font-weight:700; font-size:.96rem; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px; transition:transform .2s, background .2s, box-shadow .2s; }
+        .pf-cancel { background:#eef1f0; color:var(--ink); } .pf-cancel:hover { background:#e2e7e5; }
+        .pf-save { background:var(--teal-600); color:#fff; box-shadow:0 10px 24px rgba(13,110,99,.28); } .pf-save:hover { background:var(--teal-700); transform:translateY(-2px); }
+
+        @media (max-width:560px) { .pf-grid { grid-template-columns:1fr; } .pf-head h1 { font-size:1.3rem; } .pf-actions { justify-content:stretch; } .pf-actions .pf-btn { flex:1; justify-content:center; } }
+    </style>
+    <style>
+        .pf-shell.wide { max-width:920px; }
+        .pf-dl { display:grid; grid-template-columns:1fr 1fr; gap:14px 26px; }
+        .pf-dl div { border-bottom:1px dashed var(--line); padding-bottom:10px; }
+        .pf-dl dt { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); font-weight:700; }
+        .pf-dl dd { margin:4px 0 0; font-size:.97rem; }
+        .pf-dl .full { grid-column:1 / -1; }
+        .pf-sub { font-family:var(--fd); font-weight:600; color:var(--teal-900); font-size:1.1rem; margin:0 0 12px; }
+        .pf-table { width:100%; border-collapse:collapse; font-size:.9rem; }
+        .pf-table th { text-align:left; font-size:.76rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); padding:8px 10px; background:var(--teal-50); }
+        .pf-table td { padding:9px 10px; border-bottom:1px solid var(--line); }
+        .pf-empty { color:var(--ink-soft); font-size:.92rem; margin:0; }
+        .pf-meds { display:grid; grid-template-columns:1.6fr 1fr 1.2fr 1fr 1fr; gap:8px; margin-bottom:8px; }
+        .pf-meds .pf-input { padding:10px 12px; font-size:.9rem; }
+        .pf-hint { color:var(--ink-soft); font-size:.82rem; margin:-2px 0 10px; }
+        .pf-err { color:var(--coral-dark); font-size:.85rem; margin-top:6px; }
+        @media (max-width:760px){ .pf-dl, .pf-meds { grid-template-columns:1fr; } }
+    </style>
+
+    <div class="pf">
+        <div class="pf-page">
+            <div class="pf-shell wide">
+                <div class="pf-head">
+                    <div class="l">
+                        <div class="ic"><i class="fas fa-prescription-bottle-medical"></i></div>
+                        <div>
+                            <h1>Nueva receta · Historia #{{ $historia->id }}</h1>
+                            <p>Registra los medicamentos, las indicaciones y las notas.</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('vet.recetas.index', $historia) }}" class="pf-back"><i class="fas fa-arrow-left"></i> Volver</a>
+                </div>
+
+                <div class="pf-card">
+                    <div class="pf-card__top">
+                        <h2>Datos de la receta</h2>
+                        <p>Los campos marcados con * son obligatorios.</p>
+                    </div>
+                    <div class="pf-divider"></div>
+                    <div class="pf-body">
+                        @if ($errors->any())
+                            <div class="pf-alert">
+                                <i class="fas fa-circle-exclamation" style="margin-top:2px"></i>
+                                <div>
+                                    <strong>Revisa estos campos:</strong>
+                                    <ul>
+                                        @foreach ($errors->all() as $e) <li>{{ $e }}</li> @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        @endif
+
+                        <form method="POST" action="{{ route('vet.recetas.store', $historia) }}">
+                            @csrf
+
+                            <div class="pf-field">
+                                <label for="fecha">Fecha</label>
+                                <input id="fecha" type="datetime-local" name="fecha" value="{{ old('fecha', now()->format('Y-m-d\TH:i')) }}" class="pf-input">
+                            </div>
+
+                            {{-- MEDICAMENTOS (HU15): medicamento, dosis, frecuencia, duración y vía --}}
+                            <div class="pf-field">
+                                <label>Medicamentos <span class="req">*</span></label>
+                                <p class="pf-hint">Registra al menos un medicamento. Deja en blanco las filas que no uses.</p>
+                                @for($i = 0; $i < 3; $i++)
+                                    <div class="pf-meds">
+                                        <input type="text" name="items[{{ $i }}][medicamento]" value="{{ old("items.$i.medicamento") }}" placeholder="Medicamento" class="pf-input" {{ $i === 0 ? 'required' : '' }}>
+                                        <input type="text" name="items[{{ $i }}][dosis]" value="{{ old("items.$i.dosis") }}" placeholder="Dosis" class="pf-input">
+                                        <input type="text" name="items[{{ $i }}][frecuencia]" value="{{ old("items.$i.frecuencia") }}" placeholder="Frecuencia" class="pf-input">
+                                        <input type="text" name="items[{{ $i }}][duracion]" value="{{ old("items.$i.duracion") }}" placeholder="Duración" class="pf-input">
+                                        <input type="text" name="items[{{ $i }}][via]" value="{{ old("items.$i.via") }}" placeholder="Vía" class="pf-input">
+                                    </div>
+                                @endfor
+                                @error('items') <p class="pf-err">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="pf-field">
+                                <label for="indicaciones">Indicaciones <span class="req">*</span></label>
+                                <textarea id="indicaciones" name="indicaciones" rows="4" required class="pf-input" placeholder="Describe el tratamiento, la frecuencia y las recomendaciones">{{ old('indicaciones') }}</textarea>
+                            </div>
+
+                            <div class="pf-field">
+                                <label for="notas">Notas (opcional)</label>
+                                <textarea id="notas" name="notas" rows="3" class="pf-input" placeholder="Observaciones adicionales (control, dieta, reposo, etc.)">{{ old('notas') }}</textarea>
+                            </div>
+
+                            <div class="pf-actions">
+                                <a href="{{ route('vet.recetas.index', $historia) }}" class="pf-btn pf-cancel">Cancelar</a>
+                                <button type="submit" class="pf-btn pf-save"><i class="fas fa-floppy-disk"></i> Guardar receta</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-          <h1 class="text-xl md:text-2xl font-semibold text-slate-800 transition-colors duration-300 hover:text-sky-600">
-            Nueva receta · Historia #{{ $historia->id }}
-          </h1>
-          <p class="text-sm text-slate-500">Registra indicaciones, fecha y notas.</p>
-        </div>
-      </div>
-      <a href="{{ route('vet.recetas.index', $historia) }}"
-         class="text-sm font-medium text-sky-600 hover:text-sky-800 transition">← Volver</a>
     </div>
-
-    {{-- FORM --}}
-    <div class="card-form p-8 fade-up" style="animation-delay:.2s;">
-      <form method="POST" action="{{ route('vet.recetas.store', $historia) }}" class="space-y-5">
-        @csrf
-
-        {{-- FECHA --}}
-        <div>
-          <label class="block text-sm font-semibold text-slate-700">Fecha</label>
-          <input type="datetime-local" name="fecha"
-                 value="{{ old('fecha', now()->format('Y-m-d\TH:i')) }}"
-                 class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-800 focus:border-sky-500 focus:ring-sky-500">
-          @error('fecha')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-          @enderror
-        </div>
-
-        {{-- INDICACIONES --}}
-        <div>
-          <label class="block text-sm font-semibold text-slate-700">Indicaciones *</label>
-          <textarea name="indicaciones" rows="5" required
-                    placeholder="Describe el tratamiento, frecuencia, recomendaciones, etc."
-                    class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-800 focus:border-sky-500 focus:ring-sky-500">{{ old('indicaciones') }}</textarea>
-          @error('indicaciones')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-          @enderror
-        </div>
-
-        {{-- NOTAS --}}
-        <div>
-          <label class="block text-sm font-semibold text-slate-700">Notas (opcional)</label>
-          <textarea name="notas" rows="3"
-                    placeholder="Observaciones adicionales (control, dieta, reposo, etc.)"
-                    class="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-800 focus:border-sky-500 focus:ring-sky-500">{{ old('notas') }}</textarea>
-          @error('notas')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-          @enderror
-        </div>
-
-        {{-- BOTONES --}}
-        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 fade-up" style="animation-delay:.3s;">
-          <a href="{{ route('vet.recetas.index', $historia) }}" class="btn-outline">Cancelar</a>
-          <button type="submit" class="btn-primary">
-            💾 Guardar receta
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 </x-app-layout>

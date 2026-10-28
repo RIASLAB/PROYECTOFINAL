@@ -4,107 +4,54 @@ namespace App\Http\Controllers;
 
 use App\Models\Cita;
 use App\Models\Mascota;
-use Illuminate\Http\Request;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rule;
-use Illuminate\Database\Eloquent\Builder;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CitaController extends Controller
 {
     use AuthorizesRequests;
 
-    /**
-     * Devuelve el nombre de la columna de propietario en mascotas (compatibilidad)
-     */
-    private function ownerColumn(): ?string
+    /** Mascotas que el usuario puede usar al agendar: las propias (cliente) o todas (personal). */
+    private function mascotasDisponibles(): Builder
     {
-        foreach (['dueno', 'user_id', 'owner_id', 'cliente_id', 'client_id', 'usuario_id'] as $col) {
-            if (Schema::hasColumn('mascotas', $col)) return $col;
-        }
-        return null;
+        $user = Auth::user();
+        $q = Mascota::query();
+
+        return $user->esPersonal() ? $q : $q->deUsuario($user);
     }
 
-    /**
-     * Aplica filtro de dueño a un query de Mascotas.
-     * Tolera valores en dueno como ID, nombre o email, y espacios/mayúsculas.
-     */
-    private function applyOwnerFilterToMascotas(Builder $query): Builder
+    /** Limita un query de citas a las del usuario si es cliente. */
+    private function soloPropias(Builder $query): Builder
     {
-        $col = $this->ownerColumn();
-        if (!$col) {
-            // Si no existe la columna, no devuelvas nada
-            return $query->whereRaw('1=0');
+        $user = Auth::user();
+
+        if ($user->esCliente()) {
+            $query->whereHas('mascota', fn ($m) => $m->deUsuario($user));
+        } elseif ($user->role === 'veterinario') {
+            $query->where('vet_id', $user->id);
         }
 
-        $u  = Auth::user();
-        $id = strtolower(trim((string) $u->id));
-        $nm = strtolower(trim((string) $u->name));
-        $em = strtolower(trim((string) $u->email));
-
-        return $query->where(function ($w) use ($col, $id, $nm, $em) {
-            $w->whereRaw("LOWER(TRIM($col)) = ?", [$id])
-              ->orWhereRaw("LOWER(TRIM($col)) = ?", [$nm])
-              ->orWhereRaw("LOWER(TRIM($col)) = ?", [$em]);
-        });
+        return $query;
     }
 
-    /**
-     * Aplica filtro de dueño a un query de Citas vía relación mascota
-     */
-    private function scopeOnlyMy(Builder $query): Builder
-    {
-        $col = $this->ownerColumn();
-        if (!$col) {
-            return $query->whereRaw('1=0');
-        }
-
-        return $query->whereHas('mascota', function ($q) {
-            $this->applyOwnerFilterToMascotas($q);
-        });
-    }
-
-    /**
-     * Listado de citas (solo las del usuario actual) con búsqueda agrupada
-     */
-     public function index(Request $request)
+    /** Listado de citas: el cliente ve solo las de sus mascotas; el veterinario, las asignadas. */
+    public function index(Request $request)
     {
         $this->authorize('viewAny', Cita::class);
 
-        $q    = $request->q;
-        $user = Auth::user();
+        $q = trim((string) $request->q);
 
-        $query = Cita::with(['mascota', 'vet']);
-
-        if ($user) {
-            // 👤 CLIENTE: solo sus citas (las de sus mascotas)
-            if ($user->role === 'cliente') {
-                if ($col = $this->ownerColumn()) {
-                    $query->whereHas('mascota', function ($q2) use ($col, $user) {
-                        $q2->where($col, $user->id);
-                    });
-                }
-            }
-
-            // 👨‍⚕️ VETERINARIO: si tienes columna vet_id, filtra por él
-            elseif ($user->role === 'veterinario' && Schema::hasColumn('citas', 'vet_id')) {
-                $query->where('vet_id', $user->id);
-            }
-
-            // 🧑‍💼 admin / recepcionista => sin filtro, ven todo
-        }
-
-        $citas = $query
-            ->when($q, function ($qBuilder) use ($q) {
-                $qBuilder->where(function ($sub) use ($q) {
+        $citas = $this->soloPropias(Cita::with(['mascota', 'vet']))
+            ->when($q !== '', function ($qb) use ($q) {
+                $qb->where(function ($sub) use ($q) {
                     $sub->where('motivo', 'like', "%{$q}%")
-                        ->orWhereHas('mascota', fn ($m) =>
-                            $m->where('nombre', 'like', "%{$q}%")
-                        );
+                        ->orWhereHas('mascota', fn ($m) => $m->where('nombre', 'like', "%{$q}%"));
                 });
             })
             ->orderBy('fecha', 'desc')
@@ -114,328 +61,175 @@ class CitaController extends Controller
         return view('citas.index', compact('citas', 'q'));
     }
 
-    /**
-     * Formulario crear
-     */
     public function create()
     {
         $this->authorize('create', Cita::class);
-
-        // Solo mascotas del usuario actual
-        $mascotas = Mascota::query();
-        $this->applyOwnerFilterToMascotas($mascotas);
-        $mascotas = $mascotas->orderBy('nombre')->get(['id', 'nombre']);
+        $mascotas = $this->mascotasDisponibles()->orderBy('nombre')->get(['id', 'nombre']);
 
         return view('citas.create', compact('mascotas'));
     }
 
-    /**
-     * Guardar nueva cita
-     */
     public function store(Request $request)
     {
         $this->authorize('create', Cita::class);
+        $data = $this->validar($request);
 
-        // Normaliza hora (acepta “1:30 pm”, “13:30”, etc.) a H:i
-        if ($request->filled('hora')) {
-            $hora = $this->normalizeHora($request->input('hora'));
-            $request->merge(['hora' => $hora]); // puede quedar null si no es válida
-        }
+        // Una cita nueva siempre inicia en estado pendiente; la recepción la confirma desde la agenda.
+        $data['estado'] = 'pendiente';
 
-        $validated = $request->validate([
-            'mascota_id'    => ['required', 'integer', 'exists:mascotas,id'],
-            'fecha'         => ['required', 'date'],
-            'hora'          => ['required', 'date_format:H:i'],
-            'motivo'        => ['required', 'string', 'max:255'],
-            'estado'        => ['nullable', Rule::in(['pendiente', 'confirmada', 'cancelada', 'completada'])],
-            'observaciones' => ['nullable', 'string', 'max:2000'],
-            // si vas a asignar vet desde el formulario, descomenta:
-            // 'vet_id'        => ['nullable','integer','exists:users,id'],
-        ]);
-        $validated['estado'] = $validated['estado'] ?? 'pendiente';
+        $this->assertNoOverlap($data['fecha'], $data['hora'], (int) $data['mascota_id'], null, null);
+        Cita::create($data);
 
-        // Verifica que la mascota sea del usuario actual
-        $esMia = Mascota::query()
-            ->where('id', $validated['mascota_id'])
-            ->tap(fn ($q) => $this->applyOwnerFilterToMascotas($q))
-            ->exists();
-
-        if (!$esMia) {
-            return back()->withInput()
-                ->withErrors(['mascota_id' => 'No puedes usar una mascota que no es tuya.']);
-        }
-
-        // ====== Validación de solapamiento ======
-        $this->assertNoOverlap(
-            fecha: $validated['fecha'],
-            hora:  $validated['hora'],
-            mascotaId: $validated['mascota_id'],
-            vetId: $validated['vet_id'] ?? null,
-            ignoreCitaId: null // en store no ignoramos nada
-        );
-        // ========================================
-
-        Cita::create($validated);
-
-        return redirect()->route('citas.index')->with('ok', 'Cita creada.');
+        return redirect()->route('citas.index')->with('ok', 'Cita solicitada. La recepción la confirmará y asignará el veterinario.');
     }
 
-    /**
-     * Ver detalle
-     */
-    public function show(Cita $cita)
-    {
-        $cita->load('mascota');
-        $this->authorize('view', $cita);
-
-        return view('citas.show', compact('cita'));
-    }
-
-    /**
-     * Formulario editar
-     */
     public function edit(Cita $cita)
     {
-        $cita->load('mascota');            // Necesario para la policy
+        $cita->load('mascota');
         $this->authorize('update', $cita);
-
-        // Solo mascotas del usuario actual
-        $mascotas = Mascota::query();
-        $this->applyOwnerFilterToMascotas($mascotas);
-        $mascotas = $mascotas->orderBy('nombre')->get(['id', 'nombre']);
+        $mascotas = $this->mascotasDisponibles()->orderBy('nombre')->get(['id', 'nombre']);
 
         return view('citas.edit', compact('cita', 'mascotas'));
     }
 
-    /**
-     * Actualizar cita
-     */
     public function update(Request $request, Cita $cita)
     {
         $cita->load('mascota');
         $this->authorize('update', $cita);
+        $data = $this->validar($request);
 
-        if ($request->filled('hora')) {
-            $hora = $this->normalizeHora($request->input('hora'));
-            $request->merge(['hora' => $hora]); // puede quedar null si no es válida
+        // El cliente solo puede dejar su cita pendiente o cancelarla; los demás estados los maneja la clínica.
+        $estado = $request->input('estado', $cita->estado);
+        if (Auth::user()->esCliente() && !in_array($estado, ['pendiente', 'cancelada'], true)) {
+            $estado = $cita->estado;
         }
+        $data['estado'] = in_array($estado, Cita::ESTADOS, true) ? $estado : $cita->estado;
 
-        $validated = $request->validate([
-            'mascota_id'    => ['required', 'integer', 'exists:mascotas,id'],
-            'fecha'         => ['required', 'date'],
-            'hora'          => ['required', 'date_format:H:i'],
-            'motivo'        => ['required', 'string', 'max:255'],
-            'estado'        => ['nullable', Rule::in(['pendiente', 'confirmada', 'cancelada', 'completada'])],
-            'observaciones' => ['nullable', 'string', 'max:2000'],
-            // 'vet_id'        => ['nullable','integer','exists:users,id'],
-        ]);
-        $validated['estado'] = $validated['estado'] ?? 'pendiente';
-
-        // Verifica que la mascota seleccionada sea del usuario
-        $esMia = Mascota::query()
-            ->where('id', $validated['mascota_id'])
-            ->tap(fn ($q) => $this->applyOwnerFilterToMascotas($q))
-            ->exists();
-
-        if (!$esMia) {
-            return back()->withInput()
-                ->withErrors(['mascota_id' => 'No puedes asignar una mascota que no es tuya.']);
-        }
-
-        // ====== Validación de solapamiento ======
-        $this->assertNoOverlap(
-            fecha: $validated['fecha'],
-            hora:  $validated['hora'],
-            mascotaId: $validated['mascota_id'],
-            vetId: $validated['vet_id'] ?? null,
-            ignoreCitaId: $cita->id // en update ignoramos la propia
-        );
-        // ========================================
-
-        $cita->update($validated);
+        $this->assertNoOverlap($data['fecha'], $data['hora'], (int) $data['mascota_id'], $cita->vet_id, $cita->id);
+        $cita->update($data);
 
         return redirect()->route('citas.index')->with('ok', 'Cita actualizada.');
     }
 
-    /**
-     * Eliminar cita
-     */
     public function destroy(Request $request, Cita $cita)
     {
         $cita->load('mascota');
         $this->authorize('delete', $cita);
-
         $cita->delete();
 
         return back()->with('ok', 'Cita eliminada correctamente.');
     }
 
-    /**
-     * Normaliza hora a formato 24h H:i (acepta "1:49 pm", "01:49 p. m.", "13:49", etc.)
-     */
+    /** Validación común de creación y edición. */
+    private function validar(Request $request): array
+    {
+        if ($request->filled('hora')) {
+            $request->merge(['hora' => $this->normalizeHora($request->input('hora'))]);
+        }
+
+        $data = $request->validate([
+            'mascota_id'    => ['required', 'integer', 'exists:mascotas,id'],
+            'servicio'      => ['required', Rule::in(array_keys(Cita::SERVICIOS))],
+            'fecha'         => ['required', 'date', 'after_or_equal:today'],
+            'hora'          => ['required', 'date_format:H:i'],
+            'motivo'        => ['required', 'string', 'max:255'],
+            'observaciones' => ['nullable', 'string', 'max:2000'],
+        ], [
+            'fecha.after_or_equal' => 'La fecha de la cita no puede ser anterior a hoy.',
+        ]);
+
+        $permitida = $this->mascotasDisponibles()->whereKey($data['mascota_id'])->exists();
+        if (!$permitida) {
+            throw ValidationException::withMessages(['mascota_id' => 'No puedes usar una mascota que no es tuya.']);
+        }
+
+        return $data;
+    }
+
+    /** Normaliza la hora a formato 24 h (acepta "1:30 pm", "13:30", etc.). */
     private function normalizeHora(?string $valor): ?string
     {
-        if (!$valor) return null;
+        if (!$valor) {
+            return null;
+        }
 
         $raw = trim(mb_strtolower($valor));
-
-        // variantes comunes en español
         $raw = str_replace(
             ['a. m.', 'p. m.', 'a.m.', 'p.m.', 'a. m', 'p. m', 'a m', 'p m', ' am', ' pm', 'a.m', 'p.m'],
-            ['am',    'pm',    'am',   'pm',   'am',   'pm',  'am',  'pm',  'am',  'pm',  'am',  'pm'],
+            ['am', 'pm', 'am', 'pm', 'am', 'pm', 'am', 'pm', 'am', 'pm', 'am', 'pm'],
             $raw
         );
-        $raw = preg_replace('/\s+/', ' ', $raw); // colapsar espacios
+        $raw = preg_replace('/\s+/', ' ', $raw);
 
-        // Si ya viene en 24h (H:i), la respetamos
-        if (preg_match('/^\d{1,2}:\d{2}$/', $raw)) {
-            return $raw;
+        if (preg_match('/^(\d{1,2}):(\d{2})(:\d{2})?$/', $raw, $m)) {
+            return sprintf('%02d:%s', $m[1], $m[2]);
+        }
+        if (preg_match('/^(\d{1,2}):(\d{2})\s?(am|pm)$/', $raw, $m) && (int) $m[1] >= 1 && (int) $m[1] <= 12) {
+            $h = ((int) $m[1]) % 12 + ($m[3] === 'pm' ? 12 : 0);
+
+            return sprintf('%02d:%s', $h, $m[2]);
         }
 
-        // Si viene en 12h con am/pm
-        if (preg_match('/^\d{1,2}:\d{2}\s?(am|pm)$/', $raw)) {
-            try {
-                return Carbon::createFromFormat('h:i a', $raw)->format('H:i');
-            } catch (\Throwable $e) {
-                return null; // hará fallar la validación
-            }
-        }
-
-        // No reconocido
         return null;
     }
 
-    /**
-     * Verifica que no exista solapamiento para la misma mascota (y opcionalmente para el vet)
-     * En este ejemplo asumimos duración fija de 30 minutos. Si sólo guardas HH:MM exacto,
-     * el chequeo por igualdad de hora es suficiente; te dejo ambos enfoques.
-     */
+    /** Evita dos citas de la misma mascota (o del mismo veterinario) en la misma fecha y hora. */
     private function assertNoOverlap(string $fecha, string $hora, int $mascotaId, ?int $vetId = null, ?int $ignoreCitaId = null): void
     {
-        // === Caso simple: si tu sistema usa SLOT exacto por minuto (HH:MM exacto) ===
-        $existeMismaHora = Cita::where('mascota_id', $mascotaId)
-            ->whereDate('fecha', $fecha)
-            ->where('hora', $hora)
-            ->when($ignoreCitaId, fn($q) => $q->where('id', '<>', $ignoreCitaId))
-            ->exists();
+        $base = fn () => Cita::whereDate('fecha', $fecha)
+            ->whereIn('hora', [$hora, $hora.':00'])
+            ->where('estado', '!=', 'cancelada')
+            ->when($ignoreCitaId, fn ($q) => $q->where('id', '<>', $ignoreCitaId));
 
-        if ($existeMismaHora) {
-            throw ValidationException::withMessages([
-                'hora' => 'Ya existe una cita para esta mascota en ese horario.',
-            ]);
+        if ($base()->where('mascota_id', $mascotaId)->exists()) {
+            throw ValidationException::withMessages(['hora' => 'Ya existe una cita para esta mascota en ese horario.']);
         }
 
-        // (Opcional) evitar solapamiento por veterinario si lo usas
-        if ($vetId) {
-            $ocupadoVet = Cita::where('vet_id', $vetId)
-                ->whereDate('fecha', $fecha)
-                ->where('hora', $hora)
-                ->when($ignoreCitaId, fn($q) => $q->where('id', '<>', $ignoreCitaId))
-                ->exists();
-
-            if ($ocupadoVet) {
-                throw ValidationException::withMessages([
-                    'hora' => 'El veterinario ya tiene una cita en ese horario.',
-                ]);
-            }
+        if ($vetId && $base()->where('vet_id', $vetId)->exists()) {
+            throw ValidationException::withMessages(['hora' => 'El veterinario ya tiene una cita en ese horario.']);
         }
-
-        /* === Enfoque de rango (si manejas duración real) — Descomenta si lo usas ===
-        $durMin = 30; // duración estándar
-        $ini = Carbon::createFromFormat('H:i', $hora);
-        $fin = (clone $ini)->addMinutes($durMin);
-
-        $solapaMascota = Cita::where('mascota_id', $mascotaId)
-            ->whereDate('fecha', $fecha)
-            ->when(true, function ($q) use ($ini, $fin) {
-                // Si tuvieras columnas start_time/end_time:
-                // $q->where(function($w) use ($ini, $fin) {
-                //     $w->where('start_time', '<', $fin->format('H:i'))
-                //       ->where('end_time', '>', $ini->format('H:i'));
-                // });
-                // Con una sola "hora", usa igualdad como fallback
-                $q->where('hora', $ini->format('H:i'));
-            })
-            ->when($ignoreCitaId, fn($q) => $q->where('id', '<>', $ignoreCitaId))
-            ->exists();
-
-        if ($solapaMascota) {
-            throw ValidationException::withMessages([
-                'hora' => 'Ya existe una cita para esta mascota que se solapa con ese horario.',
-            ]);
-        }
-
-        if ($vetId) {
-            $solapaVet = Cita::where('vet_id', $vetId)
-                ->whereDate('fecha', $fecha)
-                ->when(true, function ($q) use ($ini, $fin) {
-                    // Igual que arriba: si tienes rangos, aplica intersección; si no, igualdad.
-                    $q->where('hora', $ini->format('H:i'));
-                })
-                ->when($ignoreCitaId, fn($q) => $q->where('id', '<>', $ignoreCitaId))
-                ->exists();
-
-            if ($solapaVet) {
-                throw ValidationException::withMessages([
-                    'hora' => 'El veterinario ya tiene una cita que se solapa con ese horario.',
-                ]);
-            }
-        }
-        */
     }
 
     public function pdf(Request $request)
     {
         $desde = $request->date('desde');
         $hasta = $request->date('hasta');
-        $q     = trim((string)$request->q);
+        $q     = trim((string) $request->q);
 
-        $citas = Cita::with('mascota')
-            ->tap(fn ($qry) => $this->scopeOnlyMy($qry))
-            ->when($desde, fn($qq) => $qq->whereDate('fecha', '>=', $desde))
-            ->when($hasta, fn($qq) => $qq->whereDate('fecha', '<=', $hasta))
+        $citas = $this->soloPropias(Cita::with('mascota'))
+            ->when($desde, fn ($qq) => $qq->whereDate('fecha', '>=', $desde))
+            ->when($hasta, fn ($qq) => $qq->whereDate('fecha', '<=', $hasta))
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($s) use ($q) {
                     $s->where('motivo', 'like', "%{$q}%")
                       ->orWhere('observaciones', 'like', "%{$q}%")
-                      ->orWhereHas('mascota', fn($mq) => $mq->where('nombre', 'like', "%{$q}%"));
+                      ->orWhereHas('mascota', fn ($mq) => $mq->where('nombre', 'like', "%{$q}%"));
                 });
             })
             ->orderBy('fecha')
             ->orderBy('hora')
             ->get();
 
-        $user = $request->user();
-
         $pdf = Pdf::loadView('citas.pdf', [
-            'citas' => $citas,
-            'user'  => $user,
-            'desde' => $desde,
-            'hasta' => $hasta,
-            'q'     => $q,
-            'generado' => now()->format('d/m/Y H:i')
+            'citas'    => $citas,
+            'user'     => $request->user(),
+            'desde'    => $desde,
+            'hasta'    => $hasta,
+            'q'        => $q,
+            'generado' => now()->format('d/m/Y H:i'),
         ])->setPaper('letter', 'portrait');
 
-        $nombre = 'citas_' . now()->format('Ymd_His') . '.pdf';
-        return $pdf->download($nombre);
+        return $pdf->download('citas_'.now()->format('Ymd_His').'.pdf');
     }
 
-public function completar(\Illuminate\Http\Request $request, \App\Models\Cita $cita)
-{
-    
-    // Sólo el vet asignado puede completar
-    abort_unless(
-        auth()->check() &&
-        auth()->user()->role === 'veterinario' &&
-        (int)$cita->vet_id === (int)auth()->id(),
-        403
-    );
+    /** El veterinario asignado marca la cita como atendida. */
+    public function completar(Request $request, Cita $cita)
+    {
+        abort_unless((int) $cita->vet_id === (int) Auth::id(), 403);
+        abort_if($cita->estado === 'cancelada', 422, 'No se puede completar una cita cancelada.');
 
-    $cita->update(['estado' => 'completada']);
+        $cita->update(['estado' => 'completada']);
 
-    return back()->with('ok','Cita marcada como completada.');
-}
-
-
-
+        return back()->with('ok', 'Cita marcada como completada.');
+    }
 }

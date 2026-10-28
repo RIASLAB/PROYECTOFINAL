@@ -1,4 +1,8 @@
 <x-app-layout>
+@php
+  app()->instance('flash.inline', ['ok']);
+@endphp
+
   <style>
     :root{
       --rx-primary:#0ea5e9;

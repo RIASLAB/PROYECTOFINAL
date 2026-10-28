@@ -73,8 +73,8 @@
         @endif
 
         <div class="card-actions">
-          @if(Route::has('recetas.show'))
-            <a href="{{ route('recetas.show', $r->id) }}" class="btn btn-primary">Ver</a>
+          @if(Route::has('vet.recetas.show'))
+            <a href="{{ route('vet.recetas.show', $r->id) }}" class="btn btn-primary">Ver</a>
           @endif
           @if(Route::has('recetas.edit'))
             <a href="{{ route('recetas.edit', $r->id) }}" class="btn btn-warn">Editar</a>

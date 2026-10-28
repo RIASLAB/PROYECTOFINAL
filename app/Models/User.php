@@ -43,6 +43,23 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    /** El rol "user" corresponde al cliente (dueño de mascota) */
+    public function esCliente(): bool
+    {
+        return in_array($this->role, ['user', 'cliente'], true);
+    }
+
+    /** Personal de la clínica: administrador, recepcionista o veterinario */
+    public function esPersonal(): bool
+    {
+        return in_array($this->role, ['admin', 'recepcionista', 'veterinario'], true);
+    }
+
+    public function mascotas()
+    {
+        return $this->hasMany(Mascota::class, 'dueno');
+    }
+
     protected function casts(): array
     {
         return [

@@ -1,5 +1,9 @@
 {{-- resources/views/admin/users/index.blade.php --}}
 <x-app-layout>
+@php
+  app()->instance('flash.inline', ['error']);
+@endphp
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@700&display=swap">
     <link rel="stylesheet" href="{{ asset('css/admin-users.css') }}">
 
@@ -51,7 +55,7 @@
                                     <button class="btn lock" disabled title="Bloqueado">🔒</button>
                                 @else
                                     <button class="btn btn-edit" 
-                                        onclick="openModal('editar', @js($u->only('id','name','email','role','status','assigned_vet_id')))">
+                                        onclick='openModal("editar", @json($u->only('id','name','email','role','status','assigned_vet_id'), JSON_HEX_APOS|JSON_HEX_QUOT))'>    
                                         Editar
                                     </button>
                                     <form action="{{ route('admin.users.destroy',$u) }}" method="POST" onsubmit="return confirm('¿Eliminar este usuario?');" style="display:inline">
@@ -136,14 +140,13 @@
             document.getElementById('f_password').required = true;
         } else {
             modalTitle.textContent = 'Editar Usuario';
-            const url = "{{ route('admin.users.update', ':id') }}".replace(':id', data.id);
+            const url = "{{ route('admin.users.update', ['user' => '__ID__']) }}".replace('__ID__', data.id);
             form.action = url; methodField.value = 'PUT';
             document.getElementById('userId').value = data.id;
             document.getElementById('f_name').value = data.name;
             document.getElementById('f_email').value = data.email;
             document.getElementById('f_role').value = data.role;
             document.getElementById('f_status').value = data.status;
-            document.getElementById('f_vet').value = data.assigned_vet_id ?? '';
             document.getElementById('f_password').value = '';
             document.getElementById('f_password').required = false;
         }
